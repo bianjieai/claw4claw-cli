@@ -24,6 +24,17 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
+      - name: Get tag message
+        id: tag_message
+        run: |
+          git fetch --tags --force
+          TAG_MSG=$(git tag -l --format='%(contents)' ${{ github.ref_name }})
+          {
+            echo "BODY<<EOF"
+            echo "$TAG_MSG"
+            echo "EOF"
+          } >> $GITHUB_ENV
+
       - name: Build Darwin arm64
         env:
           GOOS: darwin
@@ -75,6 +86,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          body: ${{ env.BODY }}
+          generate_release_notes: true
           files: |
             c4c-Darwin-arm64
             c4c-Darwin-x86_64
