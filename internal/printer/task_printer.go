@@ -316,3 +316,73 @@ func PrintAcceptedTaskList(w io.Writer, list *types.AcceptedTaskList) {
 	}
 	tw.Flush()
 }
+
+func PrintTaskReview(w io.Writer, review *types.TaskReview) {
+	if config.GlobalConfig.OutputFormat == "json" {
+		printJSON(w, review)
+		return
+	}
+
+	header := fmt.Sprintf("Task Review (#%d)", review.ID)
+	fmt.Fprintln(w, "=== "+header+" ===")
+
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintf(tw, "Property\tValue\n")
+	fmt.Fprintf(tw, "ID\t%d\n", review.ID)
+	fmt.Fprintf(tw, "Title\t%s\n", review.Title)
+	fmt.Fprintf(tw, "Description\t%s\n", review.Description)
+	fmt.Fprintf(tw, "Status\t%s\n", review.Status)
+	fmt.Fprintf(tw, "Bounty\t%.2f\n", review.Bounty)
+	if review.Deadline != nil {
+		fmt.Fprintf(tw, "Deadline\t%s\n", formatDate(*review.Deadline))
+	}
+	fmt.Fprintf(tw, "Publisher Agent ID\t%d\n", review.PublisherAgentID)
+	if review.WorkerAgentID != nil {
+		fmt.Fprintf(tw, "Worker Agent ID\t%d\n", *review.WorkerAgentID)
+	}
+	fmt.Fprintf(tw, "Created At\t%s\n", formatDateTime(review.CreatedAt))
+	tw.Flush()
+
+	fmt.Fprintln(w)
+	if len(review.Submissions) == 0 {
+		fmt.Fprintln(w, "No submissions yet.")
+	} else {
+		fmt.Fprintf(w, "=== Submissions (%d) ===\n", len(review.Submissions))
+		for i, sub := range review.Submissions {
+			fmt.Fprintln(w)
+			fmt.Fprintf(w, "--- Submission #%d ---\n", i+1)
+			tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+			fmt.Fprintf(tw, "Submission ID\t%d\n", sub.ID)
+			fmt.Fprintf(tw, "Submitter ID\t%d\n", sub.SubmitterID)
+			fmt.Fprintf(tw, "Status\t%s\n", sub.Status)
+			fmt.Fprintf(tw, "Submitted At\t%s\n", formatDateTime(sub.SubmittedAt))
+			if sub.ReviewedAt != nil {
+				fmt.Fprintf(tw, "Reviewed At\t%s\n", formatDateTime(*sub.ReviewedAt))
+			}
+			if sub.ReviewerID != nil {
+				fmt.Fprintf(tw, "Reviewer ID\t%d\n", *sub.ReviewerID)
+			}
+			if sub.ReviewNotes != "" {
+				fmt.Fprintf(tw, "Review Notes\t%s\n", sub.ReviewNotes)
+			}
+			tw.Flush()
+
+			fmt.Fprintln(w, "Content:")
+			fmt.Fprintln(w, strings.Repeat("-", 40))
+			fmt.Fprintln(w, sub.Content)
+			fmt.Fprintln(w, strings.Repeat("-", 40))
+
+			if len(sub.Attachments) > 0 {
+				fmt.Fprintln(w, "Attachments:")
+				for _, att := range sub.Attachments {
+					fmt.Fprintf(w, "  - %s\n", att)
+				}
+			}
+
+			if sub.Notes != "" {
+				fmt.Fprintln(w, "Notes:")
+				fmt.Fprintln(w, sub.Notes)
+			}
+		}
+	}
+}

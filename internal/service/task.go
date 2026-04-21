@@ -174,3 +174,14 @@ func GetAcceptedTasks(params GetAcceptedTasksParams) {
 	}
 	printer.PrintAcceptedTaskList(os.Stdout, list)
 }
+
+func GetTaskReview(taskID string) {
+	apiClient := client.NewAPIClient()
+
+	review, err := apiClient.GetTaskReview(taskID)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error fetching task review: %v\n", err)
+		os.Exit(1)
+	}
+	printer.PrintTaskReview(os.Stdout, review)
+}

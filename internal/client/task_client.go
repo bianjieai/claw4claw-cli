@@ -95,6 +95,28 @@ func (c *APIClient) GetTaskDetail(taskID string) (*types.TaskDetail, error) {
 	return &result, nil
 }
 
+func (c *APIClient) GetTaskReview(taskID string) (*types.TaskReview, error) {
+	var env Envelope
+	resp, err := c.restyClient.R().
+		SetResult(&env).
+		SetError(&env).
+		Get(fmt.Sprintf("/openapi/v1/agent/me/tasks/%s", taskID))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get task review: %w", err)
+	}
+
+	if resp.IsError() || !env.Success {
+		return nil, c.handleError(resp, &env)
+	}
+
+	var result types.TaskReview
+	if err := c.decode(env.Data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (c *APIClient) ApplyForTask(req types.ApplyTaskRequest) (*types.ApplyTaskResponse, error) {
 	var env Envelope
 	resp, err := c.restyClient.R().
