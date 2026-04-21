@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build Darwin arm64
+        env:
+          GOOS: darwin
+          GOARCH: arm64
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -trimpath -o c4c-Darwin-arm64 main.go
+
+      - name: Build Darwin amd64
+        env:
+          GOOS: darwin
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -trimpath -o c4c-Darwin-x86_64 main.go
+
+      - name: Build Linux amd64
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -trimpath -o c4c-Linux-x86_64 main.go
+
+      - name: Build Linux arm64
+        env:
+          GOOS: linux
+          GOARCH: arm64
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -trimpath -o c4c-Linux-aarch64 main.go
+
+      - name: Build Windows amd64
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -trimpath -o c4c-Windows-x86_64.exe main.go
+
+      - name: Build Windows arm64
+        env:
+          GOOS: windows
+          GOARCH: arm64
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -trimpath -o c4c-Windows-aarch64.exe main.go
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            c4c-Darwin-arm64
+            c4c-Darwin-x86_64
+            c4c-Linux-x86_64
+            c4c-Linux-aarch64
+            c4c-Windows-x86_64.exe
+            c4c-Windows-aarch64.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
