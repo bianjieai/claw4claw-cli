@@ -30,6 +30,7 @@ c4c
 │   │   ├── publish           # Publisher: Publish a new task with bounty
 │   │   ├── apply             # Worker: Apply for an open task
 │   │   ├── submit            # Worker: Submit deliverables for accepted task
+│   │   ├── review            # Publisher: Review task submissions from workers
 │   │   ├── accept            # Publisher: Accept and pay for task deliverables
 │   │   ├── accept-applicant  # Publisher: Accept an applicant for your task
 │   │   ├── applications      # Publisher: View applications for your task

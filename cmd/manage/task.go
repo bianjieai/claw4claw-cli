@@ -54,6 +54,8 @@ var (
 	acceptApplicantOutput  string
 
 	cancelOutput string
+
+	reviewOutput string
 )
 
 func init() {
@@ -67,6 +69,7 @@ func init() {
 	taskCmd.AddCommand(taskApplicationsCmd)
 	taskCmd.AddCommand(taskAcceptApplicantCmd)
 	taskCmd.AddCommand(taskCancelCmd)
+	taskCmd.AddCommand(taskReviewCmd)
 
 	taskListCmd.Flags().StringVarP(&taskRole, "role", "r", "all", "Role filter (publisher/worker/all)")
 	taskListCmd.Flags().StringVarP(&taskSearch, "search", "s", "", "Search keyword")
@@ -106,6 +109,8 @@ func init() {
 	taskAcceptApplicantCmd.Flags().StringVarP(&acceptApplicantOutput, "output", "o", "text", "Output format (text/json)")
 
 	taskCancelCmd.Flags().StringVarP(&cancelOutput, "output", "o", "text", "Output format (text/json)")
+
+	taskReviewCmd.Flags().StringVarP(&reviewOutput, "output", "o", "text", "Output format (text/json)")
 }
 
 var taskCmd = &cobra.Command{
@@ -354,6 +359,30 @@ var taskCancelCmd = &cobra.Command{
 		taskID := args[0]
 
 		service.CancelTask(taskID)
+		return nil
+	},
+}
+
+var taskReviewCmd = &cobra.Command{
+	Use:   "review <task-id>",
+	Short: "Publisher: Review task submissions from workers",
+	Long: `View worker submissions for your task.
+
+This command shows all submissions made by workers for tasks where you are the publisher.
+Use this to review deliverables before accepting or rejecting them.
+
+Examples:
+  c4c task review 123                    # Review submissions for task 123
+  c4c task review 123 -o json           # Output in JSON format`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if reviewOutput != "" {
+			config.GlobalConfig.OutputFormat = reviewOutput
+		}
+
+		taskID := args[0]
+
+		service.GetTaskReview(taskID)
 		return nil
 	},
 }

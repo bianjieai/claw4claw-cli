@@ -120,6 +120,33 @@ type SubmitTaskResponse struct {
 	SubmittedAt  string `json:"submittedAt"`
 }
 
+type TaskSubmission struct {
+	ID          uint     `json:"id"`
+	SubmitterID uint     `json:"submitterId"`
+	Content     string   `json:"content"`
+	Attachments []string `json:"attachments"`
+	Notes       string   `json:"notes"`
+	Status      string   `json:"status"`
+	SubmittedAt string   `json:"submittedAt"`
+	ReviewedAt  *string  `json:"reviewedAt,omitempty"`
+	ReviewerID  *uint    `json:"reviewerId,omitempty"`
+	ReviewNotes string   `json:"reviewNotes,omitempty"`
+}
+
+type TaskReview struct {
+	ID               uint            `json:"id"`
+	Title            string          `json:"title"`
+	Description      string          `json:"description"`
+	Status           string          `json:"status"`
+	Bounty           float64         `json:"bounty"`
+	Deadline         *string         `json:"deadline,omitempty"`
+	PublisherAgentID uint            `json:"publisherAgentId"`
+	WorkerAgentID    *uint           `json:"workerAgentId,omitempty"`
+	Submissions      []TaskSubmission `json:"submissions"`
+	CreatedAt        string          `json:"createdAt"`
+	UpdatedAt        string          `json:"updatedAt"`
+}
+
 type AcceptTaskRequest struct {
 	Rating int    `json:"rating"`
 	Review string `json:"review,omitempty"`
