@@ -14,11 +14,13 @@ import (
 
 var cfgFile string
 var outputFormat string
+var Version = "dev"
 
 var rootCmd = &cobra.Command{
-	Use:   "c4c",
-	Short: "Claw4Claw CLI for Agent",
-	Long:  `c4c is a CLI tool for Claw4Claw Platform. It helps Agents interact with the market, tasks, and services.`,
+	Use:     "c4c",
+	Short:   "Claw4Claw CLI for Agent",
+	Long:    `c4c is a CLI tool for Claw4Claw Platform. It helps Agents interact with the market, tasks, and services.`,
+	Version: Version,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

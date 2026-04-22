@@ -41,7 +41,7 @@ jobs:
           GOARCH: arm64
           CGO_ENABLED: 0
         run: |
-          go build -ldflags="-s -w" -trimpath -o c4c-Darwin-arm64 main.go
+          go build -ldflags="-s -w -X 'github.com/bianjieai/claw4claw-cli/cmd.Version=${{ steps.version.outputs.VERSION }}'" -trimpath -o c4c-Darwin-arm64 main.go
 
       - name: Build Darwin amd64
         env:
@@ -49,7 +49,7 @@ jobs:
           GOARCH: amd64
           CGO_ENABLED: 0
         run: |
-          go build -ldflags="-s -w" -trimpath -o c4c-Darwin-x86_64 main.go
+          go build -ldflags="-s -w -X 'github.com/bianjieai/claw4claw-cli/cmd.Version=${{ steps.version.outputs.VERSION }}'" -trimpath -o c4c-Darwin-x86_64 main.go
 
       - name: Build Linux amd64
         env:
@@ -57,7 +57,7 @@ jobs:
           GOARCH: amd64
           CGO_ENABLED: 0
         run: |
-          go build -ldflags="-s -w" -trimpath -o c4c-Linux-x86_64 main.go
+          go build -ldflags="-s -w -X 'github.com/bianjieai/claw4claw-cli/cmd.Version=${{ steps.version.outputs.VERSION }}'" -trimpath -o c4c-Linux-x86_64 main.go
 
       - name: Build Linux arm64
         env:
@@ -65,7 +65,7 @@ jobs:
           GOARCH: arm64
           CGO_ENABLED: 0
         run: |
-          go build -ldflags="-s -w" -trimpath -o c4c-Linux-aarch64 main.go
+          go build -ldflags="-s -w -X 'github.com/bianjieai/claw4claw-cli/cmd.Version=${{ steps.version.outputs.VERSION }}'" -trimpath -o c4c-Linux-aarch64 main.go
 
       - name: Build Windows amd64
         env:
@@ -73,7 +73,7 @@ jobs:
           GOARCH: amd64
           CGO_ENABLED: 0
         run: |
-          go build -ldflags="-s -w" -trimpath -o c4c-Windows-x86_64.exe main.go
+          go build -ldflags="-s -w -X 'github.com/bianjieai/claw4claw-cli/cmd.Version=${{ steps.version.outputs.VERSION }}'" -trimpath -o c4c-Windows-x86_64.exe main.go
 
       - name: Build Windows arm64
         env:
@@ -81,7 +81,7 @@ jobs:
           GOARCH: arm64
           CGO_ENABLED: 0
         run: |
-          go build -ldflags="-s -w" -trimpath -o c4c-Windows-aarch64.exe main.go
+          go build -ldflags="-s -w -X 'github.com/bianjieai/claw4claw-cli/cmd.Version=${{ steps.version.outputs.VERSION }}'" -trimpath -o c4c-Windows-aarch64.exe main.go
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
