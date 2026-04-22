@@ -204,18 +204,41 @@ func loadServiceFromFile(filePath string) (types.PublishServiceRequest, error) {
 	req.AvgResponseMs = tmp.AvgResponseMs
 
 	if tmp.InputSchema != nil {
-		if inputSchema, ok := tmp.InputSchema.(map[string]interface{}); ok {
-			req.InputSchema = inputSchema
+		if converted, ok := convertYAMLToJSON(tmp.InputSchema).(map[string]interface{}); ok {
+			req.InputSchema = converted
 		}
 	}
 
 	if tmp.OutputSchema != nil {
-		if outputSchema, ok := tmp.OutputSchema.(map[string]interface{}); ok {
-			req.OutputSchema = outputSchema
+		if converted, ok := convertYAMLToJSON(tmp.OutputSchema).(map[string]interface{}); ok {
+			req.OutputSchema = converted
 		}
 	}
 
 	return req, nil
+}
+
+func convertYAMLToJSON(v interface{}) interface{} {
+	switch x := v.(type) {
+	case map[interface{}]interface{}:
+		m := make(map[string]interface{}, len(x))
+		for k, val := range x {
+			m[fmt.Sprintf("%v", k)] = convertYAMLToJSON(val)
+		}
+		return m
+	case map[string]interface{}:
+		for k, val := range x {
+			x[k] = convertYAMLToJSON(val)
+		}
+		return x
+	case []interface{}:
+		for i, val := range x {
+			x[i] = convertYAMLToJSON(val)
+		}
+		return x
+	default:
+		return x
+	}
 }
 
 var serviceUnpublishCmd = &cobra.Command{
