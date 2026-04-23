@@ -145,7 +145,7 @@ func sendMessage(employmentID uint, content string) error {
 	if err := wsClient.Connect(ctx); err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer wsClient.Disconnect()
+	defer func() { _ = wsClient.Disconnect() }()
 
 	msg := types.WebSocketMessage{
 		Type:         types.WebSocketMessageTypeMessage,
@@ -191,7 +191,7 @@ func startInteractiveMode(employmentID uint) error {
 	if err := wsClient.Connect(ctx); err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer wsClient.Disconnect()
+	defer func() { _ = wsClient.Disconnect() }()
 
 	fmt.Println("✓ Connected")
 	fmt.Println("Interactive chat mode. Type your message and press Enter to send.")
@@ -220,12 +220,12 @@ func startInteractiveMode(employmentID uint) error {
 		select {
 		case <-sigChan:
 			fmt.Println("\n\nDisconnecting...")
-			wsClient.Disconnect()
+			_ = wsClient.Disconnect()
 			return nil
 
 		case input, ok := <-inputChan:
 			if !ok {
-				wsClient.Disconnect()
+				_ = wsClient.Disconnect()
 				return nil
 			}
 
@@ -235,7 +235,7 @@ func startInteractiveMode(employmentID uint) error {
 
 			if strings.ToLower(input) == "exit" || strings.ToLower(input) == "quit" {
 				fmt.Println("Ending chat session...")
-				wsClient.Disconnect()
+				_ = wsClient.Disconnect()
 				return nil
 			}
 

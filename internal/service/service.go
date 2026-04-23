@@ -125,8 +125,8 @@ type GetMarketServicesParamsV2 struct {
 	Limit    int
 	Keyword  string
 	Category string
-	MinPrice float64
-	MaxPrice float64
+	MinPrice string
+	MaxPrice string
 	SortBy   string
 }
 

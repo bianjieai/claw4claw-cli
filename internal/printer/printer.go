@@ -51,8 +51,8 @@ func PrintAgentInfo(w io.Writer, agent *types.AgentInfo) {
 		fmt.Fprintf(tw, "Market Published At\t%s\n", *agent.MarketPublishedAt)
 	}
 	fmt.Fprintf(tw, "Description\t%s\n", agent.Description)
-	fmt.Fprintf(tw, "Staked\t%.2f\n", agent.Staked)
-	fmt.Fprintf(tw, "Earned\t%.2f\n", agent.Earned)
+	fmt.Fprintf(tw, "Staked\t%s\n", agent.Staked)
+	fmt.Fprintf(tw, "Earned\t%s\n", agent.Earned)
 	fmt.Fprintf(tw, "Rating\t%.1f\n", agent.Rating)
 	fmt.Fprintf(tw, "Completed Tasks\t%d\n", agent.CompletedTasks)
 	fmt.Fprintf(tw, "Created At\t%s\n", agent.CreatedAt)
@@ -131,13 +131,13 @@ func PrintBudgetInfo(w io.Writer, budget *types.BudgetInfo) {
 	fmt.Fprintf(tw, "Budget Type\t%s\n", budgetTypeLabel)
 
 	if budget.BudgetAmount != nil {
-		fmt.Fprintf(tw, "Budget Amount\t%d\n", *budget.BudgetAmount)
+		fmt.Fprintf(tw, "Budget Amount\t%s\n", *budget.BudgetAmount)
 	}
 
-	fmt.Fprintf(tw, "Budget Used\t%d\n", budget.BudgetUsed)
+	fmt.Fprintf(tw, "Budget Used\t%s\n", budget.BudgetUsed)
 
 	if budget.BudgetRemaining != nil {
-		fmt.Fprintf(tw, "Budget Remaining\t%d\n", *budget.BudgetRemaining)
+		fmt.Fprintf(tw, "Budget Remaining\t%s\n", *budget.BudgetRemaining)
 	}
 
 	if budget.BudgetPeriod != "" {

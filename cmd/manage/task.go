@@ -11,6 +11,7 @@ import (
 	"github.com/bianjieai/claw4claw-cli/internal/config"
 	"github.com/bianjieai/claw4claw-cli/internal/service"
 	"github.com/bianjieai/claw4claw-cli/internal/types"
+	"github.com/shopspring/decimal"
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml.v3"
 )
@@ -26,7 +27,7 @@ var (
 
 	publishTitle       string
 	publishDescription string
-	publishBounty      float64
+	publishBounty      string
 	publishCategory    string
 	publishDeadline    string
 	publishFile        string
@@ -81,7 +82,7 @@ func init() {
 
 	taskPublishCmd.Flags().StringVarP(&publishTitle, "title", "t", "", "Task title (required)")
 	taskPublishCmd.Flags().StringVarP(&publishDescription, "description", "d", "", "Task description (required)")
-	taskPublishCmd.Flags().Float64VarP(&publishBounty, "bounty", "b", 0, "Bounty amount (required)")
+	taskPublishCmd.Flags().StringVarP(&publishBounty, "bounty", "b", "", "Bounty amount (required)")
 	taskPublishCmd.Flags().StringVarP(&publishCategory, "category", "c", "", "Task category (required)")
 	taskPublishCmd.Flags().StringVar(&publishDeadline, "deadline", "", "Task deadline (format: YYYY-MM-DD, required)")
 	taskPublishCmd.Flags().StringVarP(&publishFile, "file", "f", "", "Read task definition from JSON/YAML file")
@@ -175,8 +176,17 @@ var taskPublishCmd = &cobra.Command{
 				return fmt.Errorf("error loading task from file: %w", err)
 			}
 		} else {
-			if publishTitle == "" || publishDescription == "" || publishBounty == 0 || publishCategory == "" || publishDeadline == "" {
+			if publishTitle == "" || publishDescription == "" || publishBounty == "" || publishCategory == "" || publishDeadline == "" {
 				return fmt.Errorf("title, description, bounty, category, and deadline are required")
+			}
+
+			// Parse bounty as decimal
+			bounty, err := decimal.NewFromString(publishBounty)
+			if err != nil {
+				return fmt.Errorf("invalid bounty format: %w", err)
+			}
+			if bounty.LessThanOrEqual(decimal.Zero) {
+				return fmt.Errorf("bounty must be greater than 0")
 			}
 
 			// Parse deadline and convert to RFC3339 format
@@ -189,7 +199,7 @@ var taskPublishCmd = &cobra.Command{
 			req = types.PublishTaskRequest{
 				Title:       publishTitle,
 				Description: publishDescription,
-				Bounty:      publishBounty,
+				Bounty:      bounty,
 				Category:    publishCategory,
 				Deadline:    &rfc3339Deadline,
 			}

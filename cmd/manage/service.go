@@ -9,6 +9,7 @@ import (
 	"github.com/bianjieai/claw4claw-cli/internal/config"
 	"github.com/bianjieai/claw4claw-cli/internal/service"
 	"github.com/bianjieai/claw4claw-cli/internal/types"
+	"github.com/shopspring/decimal"
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml.v3"
 )
@@ -21,14 +22,14 @@ var (
 	publishServiceTitle         string
 	publishServiceDescription   string
 	publishServiceCategory      string
-	publishServicePrice         float64
+	publishServicePrice         string
 	publishServiceAvgResponseMs int
 	publishServiceFile          string
 	publishServiceOutput        string
 
 	updateServiceTitle       string
 	updateServiceDescription string
-	updateServicePrice       float64
+	updateServicePrice       string
 )
 
 func init() {
@@ -46,14 +47,14 @@ func init() {
 	servicePublishCmd.Flags().StringVarP(&publishServiceTitle, "title", "t", "", "Service title (required if not using file)")
 	servicePublishCmd.Flags().StringVarP(&publishServiceDescription, "description", "d", "", "Service description (required if not using file)")
 	servicePublishCmd.Flags().StringVarP(&publishServiceCategory, "category", "c", "", "Service category (required if not using file)")
-	servicePublishCmd.Flags().Float64VarP(&publishServicePrice, "price", "p", 0, "Service price (required if not using file)")
+	servicePublishCmd.Flags().StringVarP(&publishServicePrice, "price", "p", "", "Service price (required if not using file)")
 	servicePublishCmd.Flags().IntVarP(&publishServiceAvgResponseMs, "avg-response-ms", "a", 0, "Average response time in ms (required if not using file)")
 	servicePublishCmd.Flags().StringVarP(&publishServiceFile, "file", "f", "", "Read service definition from JSON/YAML file")
 	servicePublishCmd.Flags().StringVarP(&publishServiceOutput, "output", "o", "text", "Output format (text/json)")
 
 	serviceUpdateCmd.Flags().StringVarP(&updateServiceTitle, "title", "t", "", "Service title")
 	serviceUpdateCmd.Flags().StringVarP(&updateServiceDescription, "description", "d", "", "Service description")
-	serviceUpdateCmd.Flags().Float64VarP(&updateServicePrice, "price", "p", 0, "Service price")
+	serviceUpdateCmd.Flags().StringVarP(&updateServicePrice, "price", "p", "", "Service price")
 }
 
 var serviceCmd = &cobra.Command{
@@ -100,15 +101,24 @@ var servicePublishCmd = &cobra.Command{
 				return fmt.Errorf("error loading service from file: %w", err)
 			}
 		} else {
-			if publishServiceTitle == "" || publishServiceDescription == "" || publishServiceCategory == "" || publishServicePrice == 0 || publishServiceAvgResponseMs == 0 {
+			if publishServiceTitle == "" || publishServiceDescription == "" || publishServiceCategory == "" || publishServicePrice == "" || publishServiceAvgResponseMs == 0 {
 				return fmt.Errorf("title, description, category, price, and avg-response-ms are required")
+			}
+
+			// Parse price as decimal
+			price, err := decimal.NewFromString(publishServicePrice)
+			if err != nil {
+				return fmt.Errorf("invalid price format: %w", err)
+			}
+			if price.LessThanOrEqual(decimal.Zero) {
+				return fmt.Errorf("price must be greater than 0")
 			}
 
 			req = types.PublishServiceRequest{
 				Title:         publishServiceTitle,
 				Description:   publishServiceDescription,
 				Category:      publishServiceCategory,
-				Price:         publishServicePrice,
+				Price:         price,
 				AvgResponseMs: publishServiceAvgResponseMs,
 			}
 		}
@@ -137,7 +147,7 @@ var serviceUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		if updateServiceTitle == "" && updateServiceDescription == "" && updateServicePrice == 0 {
+		if updateServiceTitle == "" && updateServiceDescription == "" && updateServicePrice == "" {
 			return fmt.Errorf("at least one of --title, --description, or --price must be specified")
 		}
 
@@ -149,8 +159,15 @@ var serviceUpdateCmd = &cobra.Command{
 		if updateServiceDescription != "" {
 			req.Description = &updateServiceDescription
 		}
-		if updateServicePrice > 0 {
-			req.Price = &updateServicePrice
+		if updateServicePrice != "" {
+			price, err := decimal.NewFromString(updateServicePrice)
+			if err != nil {
+				return fmt.Errorf("invalid price format: %w", err)
+			}
+			if price.LessThanOrEqual(decimal.Zero) {
+				return fmt.Errorf("price must be greater than 0")
+			}
+			req.Price = &price
 		}
 
 		service.UpdateService(serviceID, req)
@@ -179,7 +196,7 @@ func loadServiceFromFile(filePath string) (types.PublishServiceRequest, error) {
 		Title         string      `json:"title" yaml:"title"`
 		Description   string      `json:"description" yaml:"description"`
 		Category      string      `json:"category" yaml:"category"`
-		Price         float64     `json:"price" yaml:"price"`
+		Price         string      `json:"price" yaml:"price"`
 		AvgResponseMs int         `json:"avgResponseMs" yaml:"avgResponseMs"`
 		InputSchema   interface{} `json:"inputSchema" yaml:"inputSchema"`
 		OutputSchema  interface{} `json:"outputSchema" yaml:"outputSchema"`
@@ -200,8 +217,16 @@ func loadServiceFromFile(filePath string) (types.PublishServiceRequest, error) {
 	req.Title = tmp.Title
 	req.Description = tmp.Description
 	req.Category = tmp.Category
-	req.Price = tmp.Price
 	req.AvgResponseMs = tmp.AvgResponseMs
+
+	// Parse price as decimal
+	if tmp.Price != "" {
+		price, err := decimal.NewFromString(tmp.Price)
+		if err != nil {
+			return req, fmt.Errorf("invalid price format in file: %w", err)
+		}
+		req.Price = price
+	}
 
 	if tmp.InputSchema != nil {
 		if converted, ok := convertYAMLToJSON(tmp.InputSchema).(map[string]interface{}); ok {

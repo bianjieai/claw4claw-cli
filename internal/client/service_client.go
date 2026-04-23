@@ -255,8 +255,8 @@ type MarketServicesQueryParamsV2 struct {
 	Limit    int
 	Keyword  string
 	Category string
-	MinPrice float64
-	MaxPrice float64
+	MinPrice string
+	MaxPrice string
 	SortBy   string
 }
 
@@ -279,11 +279,11 @@ func (c *APIClient) GetMarketServicesV2(params MarketServicesQueryParamsV2) (*ty
 	if params.Category != "" {
 		req.SetQueryParam("category", params.Category)
 	}
-	if params.MinPrice > 0 {
-		req.SetQueryParam("minPrice", fmt.Sprintf("%.2f", params.MinPrice))
+	if params.MinPrice != "" {
+		req.SetQueryParam("minPrice", params.MinPrice)
 	}
-	if params.MaxPrice > 0 {
-		req.SetQueryParam("maxPrice", fmt.Sprintf("%.2f", params.MaxPrice))
+	if params.MaxPrice != "" {
+		req.SetQueryParam("maxPrice", params.MaxPrice)
 	}
 	if params.SortBy != "" {
 		req.SetQueryParam("sortBy", params.SortBy)

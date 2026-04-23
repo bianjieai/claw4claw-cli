@@ -70,7 +70,7 @@ func PrintConsoleServiceList(w io.Writer, list *types.ConsoleServiceList) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	fmt.Fprintf(tw, "ID\tTitle\tCategory\tPrice\tTotal Calls\tTotal Earnings\tStatus\n")
 	for _, s := range list.Data {
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%d\t%d\t%d\t%s\n", s.ID, truncate(s.Title, 30), s.Category, s.Price, s.TotalCalls, s.TotalEarnings, s.Status)
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%d\t%s\t%s\n", s.ID, truncate(s.Title, 30), s.Category, s.Price, s.TotalCalls, s.TotalEarnings, s.Status)
 	}
 	tw.Flush()
 }
@@ -89,9 +89,9 @@ func PrintConsoleServiceDetail(w io.Writer, detail *types.ConsoleServiceDetails)
 	fmt.Fprintf(tw, "ID\t%s\n", detail.ID)
 	fmt.Fprintf(tw, "Title\t%s\n", detail.Title)
 	fmt.Fprintf(tw, "Provider Agent\t%s (ID: %s)\n", detail.ProviderAgentName, detail.ProviderAgentID)
-	fmt.Fprintf(tw, "Price\t%d\n", detail.Price)
+	fmt.Fprintf(tw, "Price\t%s\n", detail.Price)
 	fmt.Fprintf(tw, "Total Calls\t%d\n", detail.TotalCalls)
-	fmt.Fprintf(tw, "Total Earnings\t%d\n", detail.TotalEarnings)
+	fmt.Fprintf(tw, "Total Earnings\t%s\n", detail.TotalEarnings)
 	fmt.Fprintf(tw, "Avg Response Time\t%s\n", detail.AvgResponseTime)
 	fmt.Fprintf(tw, "Status\t%s\n", detail.Status)
 	fmt.Fprintf(tw, "Error Rate\t%s\n", detail.ErrorRate)
@@ -103,7 +103,7 @@ func PrintConsoleServiceDetail(w io.Writer, detail *types.ConsoleServiceDetails)
 		twLogs := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 		fmt.Fprintf(twLogs, "Log ID\tTimestamp\tStatus\tDuration\tCost\n")
 		for _, log := range detail.RecentLogs {
-			fmt.Fprintf(twLogs, "%s\t%s\t%s\t%s\t%d\n", log.ID, formatDateTime(log.Timestamp), log.Status, log.Duration, log.Cost)
+			fmt.Fprintf(twLogs, "%s\t%s\t%s\t%s\t%s\n", log.ID, formatDateTime(log.Timestamp), log.Status, log.Duration, log.Cost)
 		}
 		twLogs.Flush()
 	}
@@ -137,7 +137,7 @@ func PrintMyServicesList(w io.Writer, resp *types.MyServicesListResponse) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	fmt.Fprintf(tw, "ID\tTitle\tStatus\tPrice\tCompleted\tRating\n")
 	for _, s := range resp.Services {
-		fmt.Fprintf(tw, "%d\t%s\t%s\t%.2f\t%d\t%.1f\n", s.ID, truncate(s.Title, 30), s.Status, s.Price, s.CompletedCount, s.Rating)
+		fmt.Fprintf(tw, "%d\t%s\t%s\t%s\t%d\t%.1f\n", s.ID, truncate(s.Title, 30), s.Status, s.Price, s.CompletedCount, s.Rating)
 	}
 	tw.Flush()
 }
@@ -190,7 +190,7 @@ func PrintServiceInvocationList(w io.Writer, resp *types.ServiceInvocationListRe
 		if inv.CompletedAt != nil {
 			completedAt = formatDateTime(*inv.CompletedAt)
 		}
-		fmt.Fprintf(tw, "%d\t%s\t%s\t%s\t%.2f\t%s\n", inv.ID, truncate(inv.ServiceTitle, 20), inv.Role, inv.Status, inv.Price, formatDateTime(inv.CreatedAt))
+		fmt.Fprintf(tw, "%d\t%s\t%s\t%s\t%s\t%s\n", inv.ID, truncate(inv.ServiceTitle, 20), inv.Role, inv.Status, inv.Price, formatDateTime(inv.CreatedAt))
 		_ = completedAt
 	}
 	tw.Flush()
@@ -212,7 +212,7 @@ func PrintServiceInvocationDetail(w io.Writer, detail *types.ServiceInvocationDe
 	fmt.Fprintf(tw, "Service Title\t%s\n", detail.ServiceTitle)
 	fmt.Fprintf(tw, "Role\t%s\n", detail.Role)
 	fmt.Fprintf(tw, "Status\t%s\n", detail.Status)
-	fmt.Fprintf(tw, "Price\t%.2f\n", detail.Price)
+	fmt.Fprintf(tw, "Price\t%s\n", detail.Price)
 	fmt.Fprintf(tw, "Created At\t%s\n", formatDateTime(detail.CreatedAt))
 	if detail.CompletedAt != nil {
 		fmt.Fprintf(tw, "Completed At\t%s\n", formatDateTime(*detail.CompletedAt))
@@ -258,7 +258,7 @@ func PrintInvokeServiceSuccess(w io.Writer, resp *types.InvokeServiceResponse) {
 	fmt.Fprintf(tw, "Invocation ID\t%d\n", resp.InvocationID)
 	fmt.Fprintf(tw, "Service ID\t%d\n", resp.ServiceID)
 	fmt.Fprintf(tw, "Status\t%s\n", resp.Status)
-	fmt.Fprintf(tw, "Price\t%.2f\n", resp.Price)
+	fmt.Fprintf(tw, "Price\t%s\n", resp.Price)
 	fmt.Fprintf(tw, "Created At\t%s\n", formatDateTime(resp.CreatedAt))
 	tw.Flush()
 }

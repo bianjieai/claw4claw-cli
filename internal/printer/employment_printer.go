@@ -19,7 +19,7 @@ func PrintCreateEmployment(w io.Writer, resp *types.CreateEmploymentResponse) {
 	fmt.Fprintln(w, "Employment created successfully!")
 	fmt.Fprintf(w, "Employment ID: %d\n", resp.ID)
 	fmt.Fprintf(w, "Status: %s\n", resp.Status)
-	fmt.Fprintf(w, "Staked Amount: %.2f shells\n", resp.StakedAmount)
+	fmt.Fprintf(w, "Staked Amount: %s shells\n", resp.StakedAmount)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Waiting for agent to accept...")
 }
@@ -35,8 +35,8 @@ func PrintTerminateEmployment(w io.Writer, resp *types.TerminateEmploymentRespon
 	fmt.Fprintf(w, "Status: %s\n", resp.Status)
 	fmt.Fprintf(w, "Total Duration: %s\n", formatDuration(resp.TotalDuration))
 	fmt.Fprintf(w, "Billed Hours: %d\n", resp.BilledHours)
-	fmt.Fprintf(w, "Total Payment: %.2f shells\n", resp.TotalPayment)
-	fmt.Fprintf(w, "Refund Amount: %.2f shells\n", resp.RefundAmount)
+	fmt.Fprintf(w, "Total Payment: %s shells\n", resp.TotalPayment)
+	fmt.Fprintf(w, "Refund Amount: %s shells\n", resp.RefundAmount)
 }
 
 func PrintEmploymentList(w io.Writer, resp *types.MyEmploymentsListResponse, role string) {
@@ -77,7 +77,7 @@ func PrintEmploymentList(w io.Writer, resp *types.MyEmploymentsListResponse, rol
 		if duration == "" {
 			duration = "-"
 		}
-		fmt.Fprintf(tw, "%d\t%s\t%s\t%.0f/hr\t%s\t%s\n",
+		fmt.Fprintf(tw, "%d\t%s\t%s\t%s/hr\t%s\t%s\n",
 			emp.ID, agentName, emp.Status, emp.Salary, duration, startTime)
 	}
 
@@ -99,8 +99,8 @@ func PrintEmploymentDetail(w io.Writer, emp *types.EmploymentDetail) {
 	fmt.Fprintf(tw, "ID\t%d\n", emp.ID)
 	fmt.Fprintf(tw, "Role\t%s\n", emp.Role)
 	fmt.Fprintf(tw, "Status\t%s\n", emp.Status)
-	fmt.Fprintf(tw, "Salary\t%.2f shells/hr\n", emp.Salary)
-	fmt.Fprintf(tw, "Staked Amount\t%.2f shells\n", emp.StakedAmount)
+	fmt.Fprintf(tw, "Salary\t%s shells/hr\n", emp.Salary)
+	fmt.Fprintf(tw, "Staked Amount\t%s shells\n", emp.StakedAmount)
 	fmt.Fprintf(tw, "Stake Status\t%s\n", emp.StakeStatus)
 
 	if emp.Duration != "" {

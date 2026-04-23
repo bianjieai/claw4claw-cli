@@ -7,6 +7,7 @@ import (
 	"github.com/bianjieai/claw4claw-cli/internal/config"
 	"github.com/bianjieai/claw4claw-cli/internal/service"
 	"github.com/bianjieai/claw4claw-cli/internal/types"
+	"github.com/shopspring/decimal"
 	"github.com/spf13/cobra"
 )
 
@@ -23,9 +24,9 @@ var (
 	publishWorkHours       string
 	publishPreferredTasks  string
 	hireAgentID            uint
-	hireSalary             float64
+	hireSalary             string
 	hireDuration           string
-	hireStakeAmount        float64
+	hireStakeAmount        string
 	fireReason             string
 	employmentsRole        string
 	employmentsStatus      string
@@ -51,9 +52,9 @@ func init() {
 	agentCmd.AddCommand(agentEmploymentRejectCmd)
 
 	agentRegisterCmd.Flags().StringVar(&registerName, "name", "", "Agent name")
-	agentRegisterCmd.MarkFlagRequired("name")
+	_ = agentRegisterCmd.MarkFlagRequired("name")
 	agentRegisterCmd.Flags().StringVar(&registerCategory, "category", "", "Agent category")
-	agentRegisterCmd.MarkFlagRequired("category")
+	_ = agentRegisterCmd.MarkFlagRequired("category")
 	agentRegisterCmd.Flags().StringVar(&registerDescription, "description", "", "Agent description")
 	agentRegisterCmd.Flags().StringVar(&registerCapabilities, "capabilities", "", "Comma-separated capabilities")
 
@@ -62,18 +63,18 @@ func init() {
 	agentUpdateCmd.Flags().StringVar(&updateCapabilities, "capabilities", "", "Comma-separated capabilities")
 
 	agentStatusCmd.Flags().StringVar(&statusValue, "status", "", "Agent status (online/offline/busy)")
-	agentStatusCmd.MarkFlagRequired("status")
+	_ = agentStatusCmd.MarkFlagRequired("status")
 
 	agentPublishCmd.Flags().IntVar(&publishExpectedSalary, "expected-salary", 0, "Expected salary (shells/hour)")
 	agentPublishCmd.Flags().StringVar(&publishWorkHours, "work-hours", "", "Work hours (e.g., '9:00-18:00')")
 	agentPublishCmd.Flags().StringVar(&publishPreferredTasks, "preferred-tasks", "", "Comma-separated preferred task types")
 
 	agentHireCmd.Flags().UintVar(&hireAgentID, "agent-id", 0, "Agent ID to hire")
-	agentHireCmd.MarkFlagRequired("agent-id")
-	agentHireCmd.Flags().Float64Var(&hireSalary, "salary", 0, "Salary (shells/hour)")
-	agentHireCmd.MarkFlagRequired("salary")
+	_ = agentHireCmd.MarkFlagRequired("agent-id")
+	agentHireCmd.Flags().StringVar(&hireSalary, "salary", "", "Salary (shells/hour)")
+	_ = agentHireCmd.MarkFlagRequired("salary")
 	agentHireCmd.Flags().StringVar(&hireDuration, "duration", "", "Employment duration (e.g., '1 month')")
-	agentHireCmd.Flags().Float64Var(&hireStakeAmount, "stake-amount", 0, "Stake amount (default: salary * 10 hours)")
+	agentHireCmd.Flags().StringVar(&hireStakeAmount, "stake-amount", "", "Stake amount (default: salary * 10 hours)")
 
 	agentFireCmd.Flags().StringVar(&fireReason, "reason", "", "Reason for termination")
 
@@ -246,19 +247,37 @@ You must have sufficient balance to cover the stake amount.`,
 		if hireAgentID == 0 {
 			return fmt.Errorf("agent-id must be greater than 0")
 		}
-		if hireSalary <= 0 {
-			return fmt.Errorf("salary must be greater than 0")
+		if hireSalary == "" {
+			return fmt.Errorf("salary is required")
 		}
-		if hireStakeAmount < 0 {
-			return fmt.Errorf("stake-amount cannot be negative")
+
+		// Parse salary as decimal
+		salary, err := decimal.NewFromString(hireSalary)
+		if err != nil {
+			return fmt.Errorf("invalid salary format: %w", err)
+		}
+		if salary.LessThanOrEqual(decimal.Zero) {
+			return fmt.Errorf("salary must be greater than 0")
 		}
 
 		req := types.CreateEmploymentRequest{
 			EmployeeAgentID: hireAgentID,
-			Salary:          hireSalary,
+			Salary:          salary,
 			Duration:        hireDuration,
-			StakeAmount:     hireStakeAmount,
 		}
+
+		// Parse stake amount if provided
+		if hireStakeAmount != "" {
+			stakeAmount, err := decimal.NewFromString(hireStakeAmount)
+			if err != nil {
+				return fmt.Errorf("invalid stake amount format: %w", err)
+			}
+			if stakeAmount.LessThanOrEqual(decimal.Zero) {
+				return fmt.Errorf("stake amount must be greater than 0")
+			}
+			req.StakeAmount = stakeAmount
+		}
+
 		return service.HireAgent(req)
 	},
 }

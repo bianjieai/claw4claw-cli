@@ -8,6 +8,7 @@ import (
 
 	"github.com/bianjieai/claw4claw-cli/internal/service"
 	"github.com/bianjieai/claw4claw-cli/internal/types"
+	"github.com/shopspring/decimal"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +19,7 @@ var (
 	invocationLimit  int
 
 	invocationInputFile      string
-	invocationMaxPrice       float64
+	invocationMaxPrice       string
 	invocationIdempotencyKey string
 
 	invocationSubmitStatus      string
@@ -44,8 +45,10 @@ func init() {
 	invocationListCmd.Flags().IntVarP(&invocationLimit, "limit", "l", 10, "Items per page")
 
 	invocationInvokeCmd.Flags().StringVarP(&invocationInputFile, "input", "i", "", "JSON file containing input parameters")
-	invocationInvokeCmd.Flags().Float64Var(&invocationMaxPrice, "max-price", 0, "Maximum price")
-	invocationInvokeCmd.Flags().StringVar(&invocationIdempotencyKey, "idempotency-key", "", "Idempotency key for deduplication")
+	invocationInvokeCmd.Flags().StringVar(&invocationMaxPrice, "max-price", "", "Maximum price (required)")
+	invocationInvokeCmd.Flags().StringVar(&invocationIdempotencyKey, "idempotency-key", "", "Idempotency key for deduplication (required)")
+	invocationInvokeCmd.MarkFlagRequired("max-price")
+	invocationInvokeCmd.MarkFlagRequired("idempotency-key")
 
 	invocationSubmitCmd.Flags().StringVarP(&invocationSubmitStatus, "status", "s", "completed", "Result status (completed/failed)")
 	invocationSubmitCmd.Flags().StringVarP(&invocationSubmitOutputFile, "output", "o", "", "JSON file containing output")
@@ -93,7 +96,15 @@ var invocationShowCmd = &cobra.Command{
 var invocationInvokeCmd = &cobra.Command{
 	Use:   "invoke <service-id>",
 	Short: "Caller: Invoke a service from market",
-	Args:  cobra.ExactArgs(1),
+	Long: `Invoke a service from market.
+
+The --idempotency-key flag is REQUIRED and must be a unique identifier
+for this invocation. It is used to prevent duplicate invocations when
+retrying failed requests. Use a business-specific identifier like order ID.
+
+Example:
+  c4c manage service-invocation invoke 123 --idempotency-key "order-456-789" --max-price 100`,
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		serviceID, err := strconv.Atoi(args[0])
 		if err != nil {
@@ -115,14 +126,23 @@ var invocationInvokeCmd = &cobra.Command{
 			}
 		}
 
-		req := types.InvokeServiceRequest{
-			ServiceID:      serviceID,
-			Input:          input,
-			IdempotencyKey: invocationIdempotencyKey,
+		// 解析 maxPrice 为 decimal
+		maxPrice, err := decimal.NewFromString(invocationMaxPrice)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: invalid max price format: %v\n", err)
+			os.Exit(1)
 		}
 
-		if invocationMaxPrice > 0 {
-			req.MaxPrice = &invocationMaxPrice
+		if maxPrice.LessThanOrEqual(decimal.Zero) {
+			fmt.Fprintf(os.Stderr, "Error: max price must be greater than 0\n")
+			os.Exit(1)
+		}
+
+		req := types.InvokeServiceRequest{
+			ServiceID:      uint(serviceID),
+			Input:          input,
+			MaxPrice:       maxPrice,
+			IdempotencyKey: invocationIdempotencyKey,
 		}
 
 		service.InvokeService(req)

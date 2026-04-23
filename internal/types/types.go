@@ -1,5 +1,7 @@
 package types
 
+import "github.com/shopspring/decimal"
+
 type Reputation struct {
 	Level string  `json:"level"`
 	Score float64 `json:"score"`
@@ -13,19 +15,36 @@ type AgentStatus struct {
 	Reputation Reputation `json:"reputation"`
 }
 
+// Capabilities 结构体 - 与后端保持一致
+type Capabilities struct {
+	Skills         []string `json:"skills"`
+	Languages      []string `json:"languages"`
+	Certifications []string `json:"certifications"`
+}
+
+// Performance 结构体 - 与后端保持一致
+type Performance struct {
+	TasksCompleted  int    `json:"tasksCompleted"`
+	SuccessRate     string `json:"successRate"`
+	AvgResponseTime string `json:"avgResponseTime"`
+	History         []int  `json:"history"`
+}
+
+// MarketAgent 修复 Capabilities 类型
 type MarketAgent struct {
-	ID           uint        `json:"id"`
-	Name         string      `json:"name"`
-	Category     string      `json:"category"`
-	Price        string      `json:"price"`
-	Rating       float64     `json:"rating"`
-	Status       string      `json:"status"`
-	DID          string      `json:"did"`
-	Description  string      `json:"description,omitempty"`
-	Staked       string      `json:"staked,omitempty"`
-	Uptime       string      `json:"uptime,omitempty"`
-	Capabilities []string    `json:"capabilities,omitempty"`
-	Reputation   *Reputation `json:"reputation,omitempty"`
+	ID           uint          `json:"id"`
+	Name         string        `json:"name"`
+	Category     string        `json:"category"`
+	Price        string        `json:"price"`
+	Rating       float64       `json:"rating"`
+	Status       string        `json:"status"`
+	DID          string        `json:"did"`
+	Description  string        `json:"description,omitempty"`
+	Staked       string        `json:"staked,omitempty"`
+	Uptime       string        `json:"uptime,omitempty"`
+	Capabilities *Capabilities `json:"capabilities,omitempty"` // 修复：改为 *Capabilities
+	Performance  *Performance  `json:"performance,omitempty"`
+	Reputation   *Reputation   `json:"reputation,omitempty"`
 }
 
 type MarketAgentList struct {
@@ -38,7 +57,7 @@ type MarketTask struct {
 	Title          string  `json:"title"`
 	Description    string  `json:"description"`
 	Bounty         string  `json:"bounty"`
-	BountyValue    float64 `json:"bountyValue"`
+	BountyValue    string  `json:"bountyValue"`
 	Status         string  `json:"status"`
 	PostedBy       string  `json:"postedBy"`
 	PostedByID     int     `json:"postedById"`
@@ -64,7 +83,7 @@ type ConsoleTask struct {
 	Description         string  `json:"description"`
 	Status              string  `json:"status"`
 	Role                string  `json:"role"`
-	Bounty              float64 `json:"bounty"`
+	Bounty              string  `json:"bounty"`
 	AssociatedAgentID   *string `json:"associatedAgentId,omitempty"`
 	AssociatedAgentName *string `json:"associatedAgentName,omitempty"`
 	CreatedAt           string  `json:"createdAt"`
@@ -76,22 +95,23 @@ type ConsoleTaskList struct {
 	Total int           `json:"total"`
 }
 
+// PublishTaskRequest 修复 Bounty 类型为 decimal.Decimal
 type PublishTaskRequest struct {
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Bounty      float64 `json:"bounty"`
-	Category    string  `json:"category"`
-	Deadline    *string `json:"deadline,omitempty"`
+	Title       string          `json:"title"`
+	Description string          `json:"description"`
+	Bounty      decimal.Decimal `json:"bounty"`
+	Category    string          `json:"category"`
+	Deadline    *string         `json:"deadline,omitempty"`
 }
 
 type PublishTaskResponse struct {
-	ID           int     `json:"id"`
-	Title        string  `json:"title"`
-	Status       string  `json:"status"`
-	Bounty       float64 `json:"bounty"`
-	StakedAmount float64 `json:"stakedAmount"`
-	StakeStatus  string  `json:"stakeStatus"`
-	CreatedAt    string  `json:"createdAt"`
+	ID           int    `json:"id"`
+	Title        string `json:"title"`
+	Status       string `json:"status"`
+	Bounty       string `json:"bounty"`
+	StakedAmount string `json:"stakedAmount"`
+	StakeStatus  string `json:"stakeStatus"`
+	CreatedAt    string `json:"createdAt"`
 }
 
 type ApplyTaskRequest struct {
@@ -113,9 +133,10 @@ type SubmitTaskRequest struct {
 	Notes       string   `json:"notes,omitempty"`
 }
 
+// SubmitTaskResponse 修复 SubmissionID 和 TaskID 类型
 type SubmitTaskResponse struct {
-	SubmissionID string `json:"submissionId"`
-	TaskID       int    `json:"taskId"`
+	SubmissionID uint   `json:"submissionId"` // 修复：改为 uint
+	TaskID       uint   `json:"taskId"`       // 修复：改为 uint
 	Status       string `json:"status"`
 	SubmittedAt  string `json:"submittedAt"`
 }
@@ -134,17 +155,17 @@ type TaskSubmission struct {
 }
 
 type TaskReview struct {
-	ID               uint            `json:"id"`
-	Title            string          `json:"title"`
-	Description      string          `json:"description"`
-	Status           string          `json:"status"`
-	Bounty           float64         `json:"bounty"`
-	Deadline         *string         `json:"deadline,omitempty"`
-	PublisherAgentID uint            `json:"publisherAgentId"`
-	WorkerAgentID    *uint           `json:"workerAgentId,omitempty"`
+	ID               uint             `json:"id"`
+	Title            string           `json:"title"`
+	Description      string           `json:"description"`
+	Status           string           `json:"status"`
+	Bounty           string           `json:"bounty"`
+	Deadline         *string          `json:"deadline,omitempty"`
+	PublisherAgentID uint             `json:"publisherAgentId"`
+	WorkerAgentID    *uint            `json:"workerAgentId,omitempty"`
 	Submissions      []TaskSubmission `json:"submissions"`
-	CreatedAt        string          `json:"createdAt"`
-	UpdatedAt        string          `json:"updatedAt"`
+	CreatedAt        string           `json:"createdAt"`
+	UpdatedAt        string           `json:"updatedAt"`
 }
 
 type AcceptTaskRequest struct {
@@ -153,10 +174,10 @@ type AcceptTaskRequest struct {
 }
 
 type AcceptTaskResponse struct {
-	TaskID       int     `json:"taskId"`
-	Status       string  `json:"status"`
-	CompletedAt  string  `json:"completedAt"`
-	TotalPayment float64 `json:"totalPayment"`
+	TaskID       int    `json:"taskId"`
+	Status       string `json:"status"`
+	CompletedAt  string `json:"completedAt"`
+	TotalPayment string `json:"totalPayment"`
 }
 
 type MarketService struct {
@@ -166,7 +187,7 @@ type MarketService struct {
 	ProviderID      int     `json:"providerId"`
 	Category        string  `json:"category"`
 	Price           string  `json:"price"`
-	PriceValue      float64 `json:"priceValue"`
+	PriceValue      string  `json:"priceValue"`
 	Rating          float64 `json:"rating"`
 	Completed       int     `json:"completed"`
 	Image           string  `json:"image"`
@@ -192,9 +213,9 @@ type ConsoleService struct {
 	Title           string `json:"title"`
 	ProviderAgentID string `json:"providerAgentId"`
 	Category        string `json:"category"`
-	Price           int    `json:"price"`
+	Price           string `json:"price"`
 	TotalCalls      int    `json:"totalCalls"`
-	TotalEarnings   int    `json:"totalEarnings"`
+	TotalEarnings   string `json:"totalEarnings"`
 	Status          string `json:"status"`
 	CreatedAt       string `json:"createdAt"`
 }
@@ -209,9 +230,9 @@ type ConsoleServiceDetails struct {
 	Title             string              `json:"title"`
 	ProviderAgentID   string              `json:"providerAgentId"`
 	ProviderAgentName string              `json:"providerAgentName"`
-	Price             int                 `json:"price"`
+	Price             string              `json:"price"`
 	TotalCalls        int                 `json:"totalCalls"`
-	TotalEarnings     int                 `json:"totalEarnings"`
+	TotalEarnings     string              `json:"totalEarnings"`
 	AvgResponseTime   string              `json:"avgResponseTime"`
 	Status            string              `json:"status"`
 	CreatedAt         string              `json:"createdAt"`
@@ -224,14 +245,15 @@ type ConsoleServiceLog struct {
 	Timestamp string `json:"timestamp"`
 	Status    string `json:"status"`
 	Duration  string `json:"duration"`
-	Cost      int    `json:"cost"`
+	Cost      string `json:"cost"`
 }
 
+// PublishServiceRequest 修复 Price 类型为 decimal.Decimal
 type PublishServiceRequest struct {
 	Title         string                 `json:"title"`
 	Description   string                 `json:"description"`
 	Category      string                 `json:"category"`
-	Price         float64                `json:"price"`
+	Price         decimal.Decimal        `json:"price"`
 	AvgResponseMs int                    `json:"avgResponseMs"`
 	InputSchema   map[string]interface{} `json:"inputSchema"`
 	OutputSchema  map[string]interface{} `json:"outputSchema"`
@@ -248,7 +270,7 @@ type MyServiceItem struct {
 	ID             int     `json:"id"`
 	Title          string  `json:"title"`
 	Status         string  `json:"status"`
-	Price          float64 `json:"price"`
+	Price          string  `json:"price"`
 	CompletedCount int     `json:"completedCount"`
 	Rating         float64 `json:"rating"`
 	CreatedAt      string  `json:"createdAt"`
@@ -260,9 +282,9 @@ type MyServicesListResponse struct {
 }
 
 type UpdateServiceRequest struct {
-	Title       *string  `json:"title,omitempty"`
-	Description *string  `json:"description,omitempty"`
-	Price       *float64 `json:"price,omitempty"`
+	Title       *string          `json:"title,omitempty"`
+	Description *string          `json:"description,omitempty"`
+	Price       *decimal.Decimal `json:"price,omitempty"`
 }
 
 type UpdateServiceResponse struct {
@@ -279,19 +301,20 @@ type DeactivateServiceResponse struct {
 	Status  string `json:"status"`
 }
 
+// InvokeServiceRequest 修复 MaxPrice 类型为 decimal.Decimal
 type InvokeServiceRequest struct {
-	ServiceID      int                    `json:"serviceId"`
+	ServiceID      uint                   `json:"serviceId"`
 	Input          map[string]interface{} `json:"input"`
-	MaxPrice       *float64               `json:"maxPrice,omitempty"`
-	IdempotencyKey string                 `json:"idempotencyKey,omitempty"`
+	MaxPrice       decimal.Decimal        `json:"maxPrice"`
+	IdempotencyKey string                 `json:"idempotencyKey"`
 }
 
 type InvokeServiceResponse struct {
-	InvocationID int     `json:"invocationId"`
-	ServiceID    int     `json:"serviceId"`
-	Status       string  `json:"status"`
-	Price        float64 `json:"price"`
-	CreatedAt    string  `json:"createdAt"`
+	InvocationID int    `json:"invocationId"`
+	ServiceID    int    `json:"serviceId"`
+	Status       string `json:"status"`
+	Price        string `json:"price"`
+	CreatedAt    string `json:"createdAt"`
 }
 
 type SubmitServiceResultRequest struct {
@@ -323,7 +346,7 @@ type ServiceInvocationItem struct {
 	ServiceTitle string  `json:"serviceTitle"`
 	Role         string  `json:"role"`
 	Status       string  `json:"status"`
-	Price        float64 `json:"price"`
+	Price        string  `json:"price"`
 	CreatedAt    string  `json:"createdAt"`
 	CompletedAt  *string `json:"completedAt,omitempty"`
 }
@@ -344,7 +367,7 @@ type ServiceInvocationDetail struct {
 	Input        map[string]interface{} `json:"input,omitempty"`
 	Output       map[string]interface{} `json:"output,omitempty"`
 	Attachments  []string               `json:"attachments,omitempty"`
-	Price        float64                `json:"price"`
+	Price        string                 `json:"price"`
 	Rating       *int                   `json:"rating,omitempty"`
 	Review       string                 `json:"review,omitempty"`
 	TimeoutAt    *string                `json:"timeoutAt,omitempty"`
@@ -402,8 +425,8 @@ type AgentInfo struct {
 	Description       string                 `json:"description"`
 	Capabilities      []string               `json:"capabilities"`
 	Preferences       map[string]interface{} `json:"preferences"`
-	Staked            float64                `json:"staked"`
-	Earned            float64                `json:"earned"`
+	Staked            string                 `json:"staked"`
+	Earned            string                 `json:"earned"`
 	Rating            float64                `json:"rating"`
 	CompletedTasks    int                    `json:"completedTasks"`
 	CreatedAt         string                 `json:"createdAt"`
@@ -451,8 +474,8 @@ type MyTask struct {
 	Description         string  `json:"description"`
 	Status              string  `json:"status"`
 	Role                string  `json:"role"`
-	Bounty              float64 `json:"bounty"`
-	StakedAmount        float64 `json:"stakedAmount"`
+	Bounty              string  `json:"bounty"`
+	StakedAmount        string  `json:"stakedAmount"`
 	StakeStatus         string  `json:"stakeStatus"`
 	Deadline            *string `json:"deadline,omitempty"`
 	AssociatedAgentID   *string `json:"associatedAgentId,omitempty"`
@@ -466,15 +489,15 @@ type MyTaskList struct {
 }
 
 type MyTaskApplication struct {
-	ID                string  `json:"id"`
-	TaskID            string  `json:"taskId"`
-	TaskTitle         string  `json:"taskTitle"`
-	TaskBounty        float64 `json:"taskBounty"`
-	TaskStatus        string  `json:"taskStatus"`
-	Status            string  `json:"status"`
-	Message           string  `json:"message"`
-	EstimatedDuration string  `json:"estimatedDuration,omitempty"`
-	CreatedAt         string  `json:"createdAt"`
+	ID                string `json:"id"`
+	TaskID            string `json:"taskId"`
+	TaskTitle         string `json:"taskTitle"`
+	TaskBounty        string `json:"taskBounty"`
+	TaskStatus        string `json:"taskStatus"`
+	Status            string `json:"status"`
+	Message           string `json:"message"`
+	EstimatedDuration string `json:"estimatedDuration,omitempty"`
+	CreatedAt         string `json:"createdAt"`
 }
 
 type MyTaskApplicationList struct {
@@ -489,7 +512,7 @@ type AcceptedTask struct {
 	Title              string  `json:"title"`
 	Description        string  `json:"description"`
 	Status             string  `json:"status"`
-	Bounty             float64 `json:"bounty"`
+	Bounty             string  `json:"bounty"`
 	Deadline           *string `json:"deadline,omitempty"`
 	PublisherAgentID   string  `json:"publisherAgentId"`
 	PublisherAgentName string  `json:"publisherAgentName"`
@@ -508,7 +531,7 @@ type TaskDetail struct {
 	Description      string  `json:"description"`
 	Category         string  `json:"category"`
 	Status           string  `json:"status"`
-	Bounty           float64 `json:"bounty"`
+	Bounty           string  `json:"bounty"`
 	Deadline         *string `json:"deadline,omitempty"`
 	PublisherAgentID uint    `json:"publisherAgentId"`
 	WorkerAgentID    *uint   `json:"workerAgentId,omitempty"`
@@ -555,19 +578,20 @@ const (
 	StakeStatusSettled StakeStatus = "settled"
 )
 
+// CreateEmploymentRequest 修复 Salary 和 StakeAmount 类型为 decimal.Decimal
 type CreateEmploymentRequest struct {
-	EmployeeAgentID uint    `json:"employeeAgentId"`
-	Salary          float64 `json:"salary"`
-	Duration        string  `json:"duration,omitempty"`
-	StakeAmount     float64 `json:"stakeAmount,omitempty"`
+	EmployeeAgentID uint            `json:"employeeAgentId"`
+	Salary          decimal.Decimal `json:"salary"`
+	Duration        string          `json:"duration,omitempty"`
+	StakeAmount     decimal.Decimal `json:"stakeAmount,omitempty"`
 }
 
 type CreateEmploymentResponse struct {
 	ID              uint        `json:"id"`
 	EmployerAgentID uint        `json:"employerAgentId"`
 	EmployeeAgentID uint        `json:"employeeAgentId"`
-	Salary          float64     `json:"salary"`
-	StakedAmount    float64     `json:"stakedAmount"`
+	Salary          string      `json:"salary"`
+	StakedAmount    string      `json:"stakedAmount"`
 	StakeStatus     StakeStatus `json:"stakeStatus"`
 	Status          string      `json:"status"`
 	CreatedAt       string      `json:"createdAt"`
@@ -599,14 +623,14 @@ type TerminateEmploymentRequest struct {
 }
 
 type TerminateEmploymentResponse struct {
-	ID            uint    `json:"id"`
-	Status        string  `json:"status"`
-	TotalDuration int64   `json:"totalDuration"`
-	BilledHours   int     `json:"billedHours"`
-	TotalPayment  float64 `json:"totalPayment"`
-	RefundAmount  float64 `json:"refundAmount"`
-	EndTime       string  `json:"endTime"`
-	Message       string  `json:"message"`
+	ID            uint   `json:"id"`
+	Status        string `json:"status"`
+	TotalDuration int64  `json:"totalDuration"`
+	BilledHours   int    `json:"billedHours"`
+	TotalPayment  string `json:"totalPayment"`
+	RefundAmount  string `json:"refundAmount"`
+	EndTime       string `json:"endTime"`
+	Message       string `json:"message"`
 }
 
 type MyEmploymentsQueryParams struct {
@@ -623,8 +647,8 @@ type EmploymentListItem struct {
 	EmployerAgentName string      `json:"employerAgentName"`
 	EmployeeAgentID   uint        `json:"employeeAgentId"`
 	EmployeeAgentName string      `json:"employeeAgentName"`
-	Salary            float64     `json:"salary"`
-	StakedAmount      float64     `json:"stakedAmount"`
+	Salary            string      `json:"salary"`
+	StakedAmount      string      `json:"stakedAmount"`
 	StakeStatus       StakeStatus `json:"stakeStatus"`
 	Status            string      `json:"status"`
 	Duration          string      `json:"duration,omitempty"`
@@ -649,8 +673,8 @@ type EmploymentDetail struct {
 	EmployeeAgentID     uint        `json:"employeeAgentId"`
 	EmployeeAgentName   string      `json:"employeeAgentName"`
 	EmployeeAgentAvatar string      `json:"employeeAgentAvatar,omitempty"`
-	Salary              float64     `json:"salary"`
-	StakedAmount        float64     `json:"stakedAmount"`
+	Salary              string      `json:"salary"`
+	StakedAmount        string      `json:"stakedAmount"`
 	StakeStatus         StakeStatus `json:"stakeStatus"`
 	Status              string      `json:"status"`
 	Duration            string      `json:"duration,omitempty"`
@@ -663,29 +687,19 @@ type EmploymentDetail struct {
 type WalletTransaction struct {
 	ID          string `json:"id"`
 	Type        string `json:"type"`
-	Amount      int64  `json:"amount"`
-	Balance     int64  `json:"balance"`
+	Amount      string `json:"amount"`
+	Balance     string `json:"balance"`
 	Description string `json:"description"`
 	RelatedID   string `json:"relatedId,omitempty"`
 	RelatedType string `json:"relatedType,omitempty"`
 	CreatedAt   string `json:"createdAt"`
 }
 
-type WalletSummary struct {
-	Balance            int64               `json:"balance"`
-	FrozenAmount       int64               `json:"frozenAmount"`
-	TotalAssets        int64               `json:"totalAssets"`
-	BalanceInCNY       float64             `json:"balanceInCNY"`
-	InvoicableAmount   float64             `json:"invoicableAmount"`
-	PendingRefunds     int                 `json:"pendingRefunds"`
-	RecentTransactions []WalletTransaction `json:"recentTransactions"`
-}
-
 type BudgetInfo struct {
 	BudgetType      string  `json:"budgetType"`
-	BudgetAmount    *int64  `json:"budgetAmount,omitempty"`
-	BudgetUsed      int64   `json:"budgetUsed"`
-	BudgetRemaining *int64  `json:"budgetRemaining,omitempty"`
+	BudgetAmount    *string `json:"budgetAmount,omitempty"`
+	BudgetUsed      string  `json:"budgetUsed"`
+	BudgetRemaining *string `json:"budgetRemaining,omitempty"`
 	BudgetPeriod    string  `json:"budgetPeriod,omitempty"`
 	BudgetResetAt   *string `json:"budgetResetAt,omitempty"`
 }

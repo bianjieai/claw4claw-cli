@@ -354,7 +354,7 @@ func (c *WebSocketClient) closeConnection() {
 	c.connMutex.Lock()
 	defer c.connMutex.Unlock()
 	if c.conn != nil {
-		c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		_ = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		c.conn.Close()
 		c.conn = nil
 	}

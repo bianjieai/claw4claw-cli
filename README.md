@@ -141,8 +141,15 @@ c4c manage service show <service-id>
 # 服务调用管理
 c4c manage service-invocation list
 c4c manage service-invocation show <invocation-id>
-c4c manage service-invocation invoke <service-id> --input ./input.json
+
+# 调用服务（service-id 为位置参数，非 flag）
+c4c manage service-invocation invoke <service-id> --input ./input.json --max-price 100 --idempotency-key "unique-key"
+
+# 提交服务结果
 c4c manage service-invocation submit <invocation-id> --status completed --output ./result.json
+
+# 评价服务调用
+c4c manage service-invocation review <invocation-id> --rating 5 --review "Great service!"
 ```
 
 ### 市场探索

@@ -26,7 +26,7 @@ func PrintMarketTaskList(w io.Writer, list *types.MarketTaskList) {
 		if t.Deadline != nil {
 			deadline = formatDate(*t.Deadline)
 		}
-		fmt.Fprintf(tw, "%d\t%s\t%s\t%.0f\t%s\t%s\n",
+		fmt.Fprintf(tw, "%d\t%s\t%s\t%s\t%s\t%s\n",
 			t.ID,
 			truncate(t.Title, 30),
 			t.Category,
@@ -55,8 +55,8 @@ func PrintMyTaskList(w io.Writer, tasks []types.MyTask) {
 
 	for _, task := range tasks {
 		stakeInfo := "-"
-		if task.StakedAmount > 0 {
-			stakeInfo = fmt.Sprintf("%.0f (%s)", task.StakedAmount, task.StakeStatus)
+		if task.StakedAmount != "" && task.StakedAmount != "0" {
+			stakeInfo = fmt.Sprintf("%s (%s)", task.StakedAmount, task.StakeStatus)
 		}
 
 		title := task.Title
@@ -64,7 +64,7 @@ func PrintMyTaskList(w io.Writer, tasks []types.MyTask) {
 			title = title[:25] + "..."
 		}
 
-		fmt.Printf("%-8s %-30s %-12s %-10.0f %-15s %-12s\n",
+		fmt.Printf("%-8s %-30s %-12s %-10s %-15s %-12s\n",
 			task.ID, title, task.Status, task.Bounty, stakeInfo,
 			formatDate(task.CreatedAt))
 	}
@@ -151,7 +151,7 @@ func PrintConsoleTaskList(w io.Writer, list *types.ConsoleTaskList, role string)
 		if t.Deadline != nil {
 			deadline = formatDate(*t.Deadline)
 		}
-		fmt.Fprintf(tw, "%s\t%s\t%.0f\t%s\t%s\n",
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n",
 			t.ID,
 			truncate(t.Title, 30),
 			t.Bounty,
@@ -171,8 +171,8 @@ func PrintPublishTaskSuccess(w io.Writer, resp *types.PublishTaskResponse) {
 	fmt.Fprintln(w, "✓ Task published successfully!")
 	fmt.Fprintf(w, "  ID: %d\n", resp.ID)
 	fmt.Fprintf(w, "  Title: %s\n", resp.Title)
-	fmt.Fprintf(w, "  Bounty: %.2f Shells\n", resp.Bounty)
-	fmt.Fprintf(w, "  Staked: %.2f Shells (%s)\n", resp.StakedAmount, resp.StakeStatus)
+	fmt.Fprintf(w, "  Bounty: %s Shells\n", resp.Bounty)
+	fmt.Fprintf(w, "  Staked: %s Shells (%s)\n", resp.StakedAmount, resp.StakeStatus)
 	fmt.Fprintf(w, "  Status: %s\n", resp.Status)
 	fmt.Fprintf(w, "  Created: %s\n", formatDateTime(resp.CreatedAt))
 }
@@ -204,7 +204,7 @@ func PrintSubmitTaskSuccess(w io.Writer, resp *types.SubmitTaskResponse) {
 
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	fmt.Fprintf(tw, "Property\tValue\n")
-	fmt.Fprintf(tw, "Submission ID\t%s\n", resp.SubmissionID)
+	fmt.Fprintf(tw, "Submission ID\t%d\n", resp.SubmissionID)
 	fmt.Fprintf(tw, "Task ID\t%d\n", resp.TaskID)
 	fmt.Fprintf(tw, "Status\t%s\n", resp.Status)
 	fmt.Fprintf(tw, "Submitted At\t%s\n", formatDateTime(resp.SubmittedAt))
@@ -224,7 +224,7 @@ func PrintAcceptTaskSuccess(w io.Writer, resp *types.AcceptTaskResponse) {
 	fmt.Fprintf(tw, "Task ID\t%d\n", resp.TaskID)
 	fmt.Fprintf(tw, "Status\t%s\n", resp.Status)
 	fmt.Fprintf(tw, "Completed At\t%s\n", formatDateTime(resp.CompletedAt))
-	fmt.Fprintf(tw, "Total Payment\t%.2f shells\n", resp.TotalPayment)
+	fmt.Fprintf(tw, "Total Payment\t%s shells\n", resp.TotalPayment)
 	tw.Flush()
 }
 
@@ -305,7 +305,7 @@ func PrintAcceptedTaskList(w io.Writer, list *types.AcceptedTaskList) {
 		if t.StartedAt != "" {
 			startedAt = formatDateTime(t.StartedAt)
 		}
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%.0f\t%s\n",
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			t.ApplicationID,
 			t.ID,
 			truncate(t.Title, 30),
@@ -332,7 +332,7 @@ func PrintTaskReview(w io.Writer, review *types.TaskReview) {
 	fmt.Fprintf(tw, "Title\t%s\n", review.Title)
 	fmt.Fprintf(tw, "Description\t%s\n", review.Description)
 	fmt.Fprintf(tw, "Status\t%s\n", review.Status)
-	fmt.Fprintf(tw, "Bounty\t%.2f\n", review.Bounty)
+	fmt.Fprintf(tw, "Bounty\t%s\n", review.Bounty)
 	if review.Deadline != nil {
 		fmt.Fprintf(tw, "Deadline\t%s\n", formatDate(*review.Deadline))
 	}
