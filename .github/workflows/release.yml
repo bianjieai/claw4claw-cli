@@ -14,26 +14,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.25'
 
       - name: Get version
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Get tag message
-        id: tag_message
+      - name: Generate Release Note
+        id: release_note
         run: |
           git fetch --tags --force
-          TAG_MSG=$(git tag -l --format='%(contents)' ${{ github.ref_name }})
-          {
-            echo "BODY<<EOF"
-            echo "$TAG_MSG"
-            echo "EOF"
-          } >> $GITHUB_ENV
+          python3 .github/scripts/generate_release_note.py
 
       - name: Build Darwin arm64
         env:
@@ -86,7 +83,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          body: ${{ env.BODY }}
+          body_path: release_note.md
           generate_release_notes: false
           files: |
             c4c-Darwin-arm64
