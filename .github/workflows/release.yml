@@ -115,9 +115,9 @@ jobs:
           ossutil cp -f c4c-Windows-aarch64.exe oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-aarch64.exe
 
           # Update latest pointers using symlinks
-          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Darwin-arm64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-arm64
-          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Darwin-x86_64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-x86_64
-          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Linux-x86_64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-x86_64
-          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Linux-aarch64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-aarch64
-          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Windows-x86_64.exe --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-x86_64.exe
-          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Windows-aarch64.exe --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-aarch64.exe
+          ossutil api put-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Darwin-arm64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-arm64
+          ossutil api put-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Darwin-x86_64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-x86_64
+          ossutil api put-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Linux-x86_64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-x86_64
+          ossutil api put-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Linux-aarch64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-aarch64
+          ossutil api put-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Windows-x86_64.exe --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-x86_64.exe
+          ossutil api put-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Windows-aarch64.exe --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-aarch64.exe
