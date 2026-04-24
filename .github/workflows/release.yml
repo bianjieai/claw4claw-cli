@@ -101,7 +101,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
-          AWS_DEFAULT_REGION: oss-cn-hangzhou
+          AWS_DEFAULT_REGION: ${{ secrets.OSS_REGION }}
         run: |
           ENDPOINT="${{ secrets.OSS_ENDPOINT }}"
           if [[ ! $ENDPOINT =~ ^https?:// ]]; then
