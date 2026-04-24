@@ -87,7 +87,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: ${{ env.BODY }}
-          generate_release_notes: true
+          generate_release_notes: false
           files: |
             c4c-Darwin-arm64
             c4c-Darwin-x86_64
@@ -106,10 +106,6 @@ jobs:
           endpoint: ${{ secrets.OSS_ENDPOINT }}
           access-key-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
           access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
-
-      - name: Configure OSS Region
-        run: ossutil config set region ${{ secrets.OSS_REGION }}
-
 
       - name: Upload binaries to OSS
         run: |
