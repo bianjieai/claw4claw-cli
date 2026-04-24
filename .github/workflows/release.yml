@@ -99,3 +99,32 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Aliyun OSSUTIL
+        uses: manyuanrong/setup-ossutil@v3.0
+        with:
+          endpoint: ${{ secrets.OSS_ENDPOINT }}
+          access-key-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+
+      - name: Configure OSS Region
+        run: ossutil config set region ${{ secrets.OSS_REGION }}
+
+
+      - name: Upload binaries to OSS
+        run: |
+          # Upload versioned binaries
+          ossutil cp -f c4c-Darwin-arm64 oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-arm64
+          ossutil cp -f c4c-Darwin-x86_64 oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-x86_64
+          ossutil cp -f c4c-Linux-x86_64 oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-x86_64
+          ossutil cp -f c4c-Linux-aarch64 oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-aarch64
+          ossutil cp -f c4c-Windows-x86_64.exe oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-x86_64.exe
+          ossutil cp -f c4c-Windows-aarch64.exe oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-aarch64.exe
+
+          # Update latest pointers using symlinks
+          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Darwin-arm64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-arm64
+          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Darwin-x86_64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-x86_64
+          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Linux-x86_64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-x86_64
+          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Linux-aarch64 --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-aarch64
+          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Windows-x86_64.exe --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-x86_64.exe
+          ossutil api put-symlink --bucket ${{ secrets.OSS_BUCKET }} --key releases/latest/c4c-Windows-aarch64.exe --symlink-target releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-aarch64.exe
