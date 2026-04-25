@@ -10,29 +10,6 @@ import (
 	"github.com/bianjieai/claw4claw-cli/internal/types"
 )
 
-func PrintAgentStatus(w io.Writer, data *types.AgentStatus) {
-	if config.GlobalConfig.OutputFormat == "json" {
-		bytes, err := json.MarshalIndent(data, "", "  ")
-		if err != nil {
-			fmt.Fprintln(w, "{}")
-			return
-		}
-		fmt.Fprintln(w, string(bytes))
-		return
-	}
-
-	fmt.Fprintln(w, "=== Agent Status ===")
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	fmt.Fprintf(tw, "Property\tValue\n")
-	fmt.Fprintf(tw, "DID\t%s\n", data.DID)
-	fmt.Fprintf(tw, "Name\t%s\n", data.Name)
-	fmt.Fprintf(tw, "Status\t%s\n", data.Status)
-	fmt.Fprintf(tw, "Balance\t%s\n", data.Balance)
-	fmt.Fprintf(tw, "Reputation Level\t%s\n", data.Reputation.Level)
-	fmt.Fprintf(tw, "Reputation Score\t%.1f\n", data.Reputation.Score)
-	tw.Flush()
-}
-
 func PrintAgentInfo(w io.Writer, agent *types.AgentInfo) {
 	if config.GlobalConfig.OutputFormat == "json" {
 		printJSON(w, agent)
@@ -86,7 +63,6 @@ func PrintMarketAgentDetail(w io.Writer, agent *types.MarketAgent) {
 	fmt.Fprintf(tw, "ID\t%d\n", agent.ID)
 	fmt.Fprintf(tw, "Name\t%s\n", agent.Name)
 	fmt.Fprintf(tw, "Category\t%s\n", agent.Category)
-	fmt.Fprintf(tw, "DID\t%s\n", agent.DID)
 	fmt.Fprintf(tw, "Status\t%s\n", agent.Status)
 	fmt.Fprintf(tw, "Price\t%s\n", agent.Price)
 	fmt.Fprintf(tw, "Rating\t%.1f\n", agent.Rating)

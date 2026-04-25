@@ -91,30 +91,6 @@ func (c *APIClient) decode(data any, target any) error {
 	return nil
 }
 
-// GetAgentStatus queries the agent status from the API.
-func (c *APIClient) GetAgentStatus() (*types.AgentStatus, error) {
-	var env Envelope
-
-	resp, err := c.restyClient.R().
-		SetResult(&env).
-		SetError(&env).
-		Get("/api/v1/agent/status")
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to call get agent status: %w", err)
-	}
-
-	if resp.IsError() || !env.Success {
-		return nil, c.handleError(resp, &env)
-	}
-
-	var status types.AgentStatus
-	if err := c.decode(env.Data, &status); err != nil {
-		return nil, err
-	}
-	return &status, nil
-}
-
 type MarketTasksQueryParams struct {
 	Page     int
 	Limit    int

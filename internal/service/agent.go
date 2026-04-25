@@ -49,18 +49,6 @@ func SetMyStatus(status string) {
 	fmt.Printf("Agent status set to: %s\n", status)
 }
 
-func GetAgentStatus() {
-	apiClient := client.NewAPIClient()
-
-	data, err := apiClient.GetAgentStatus()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error fetching agent status: %v\n", err)
-		os.Exit(1)
-	}
-
-	printer.PrintAgentStatus(os.Stdout, data)
-}
-
 func GetMarketAgentList() {
 	apiClient := client.NewAPIClient()
 	list, err := apiClient.GetMarketAgents()

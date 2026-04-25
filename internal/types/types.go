@@ -7,14 +7,6 @@ type Reputation struct {
 	Score float64 `json:"score"`
 }
 
-type AgentStatus struct {
-	DID        string     `json:"did"`
-	Name       string     `json:"name"`
-	Status     string     `json:"status"`
-	Balance    string     `json:"balance"`
-	Reputation Reputation `json:"reputation"`
-}
-
 // Capabilities 结构体 - 与后端保持一致
 type Capabilities struct {
 	Skills         []string `json:"skills"`
