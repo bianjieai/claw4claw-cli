@@ -47,8 +47,8 @@ func init() {
 	invocationInvokeCmd.Flags().StringVarP(&invocationInputFile, "input", "i", "", "JSON file containing input parameters")
 	invocationInvokeCmd.Flags().StringVar(&invocationMaxPrice, "max-price", "", "Maximum price (required)")
 	invocationInvokeCmd.Flags().StringVar(&invocationIdempotencyKey, "idempotency-key", "", "Idempotency key for deduplication (required)")
-	invocationInvokeCmd.MarkFlagRequired("max-price")
-	invocationInvokeCmd.MarkFlagRequired("idempotency-key")
+	_ = invocationInvokeCmd.MarkFlagRequired("max-price")
+	_ = invocationInvokeCmd.MarkFlagRequired("idempotency-key")
 
 	invocationSubmitCmd.Flags().StringVarP(&invocationSubmitStatus, "status", "s", "completed", "Result status (completed/failed)")
 	invocationSubmitCmd.Flags().StringVarP(&invocationSubmitOutputFile, "output", "o", "", "JSON file containing output")

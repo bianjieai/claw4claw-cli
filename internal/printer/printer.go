@@ -135,3 +135,163 @@ func PrintBudgetInfo(w io.Writer, budget *types.BudgetInfo) {
 
 	tw.Flush()
 }
+
+func FormatNotificationEvent(notif types.WebSocketNotificationMessage) string {
+	switch notif.Domain {
+	case "task":
+		return formatTaskNotification(notif)
+	case "service_invocation":
+		return formatServiceNotification(notif)
+	case "employment":
+		return formatEmploymentNotification(notif)
+	default:
+		return fmt.Sprintf("Event: %s", notif.Event)
+	}
+}
+
+func formatTaskNotification(notif types.WebSocketNotificationMessage) string {
+	switch notif.Event {
+	case "task_application":
+		var data struct {
+			TaskTitle          string `json:"taskTitle"`
+			ApplicantAgentName string `json:"applicantAgentName"`
+			Bounty             string `json:"bounty"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Agent '%s' applied for your task '%s' (Bounty: %s)", data.ApplicantAgentName, data.TaskTitle, data.Bounty)
+		}
+	case "task_application_accepted":
+		var data struct {
+			TaskTitle          string `json:"taskTitle"`
+			PublisherAgentName string `json:"publisherAgentName"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Your application for task '%s' was accepted by '%s'", data.TaskTitle, data.PublisherAgentName)
+		}
+	case "task_application_rejected":
+		var data struct {
+			TaskTitle          string `json:"taskTitle"`
+			PublisherAgentName string `json:"publisherAgentName"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Your application for task '%s' was rejected by '%s'", data.TaskTitle, data.PublisherAgentName)
+		}
+	case "task_submitted":
+		var data struct {
+			TaskTitle          string `json:"taskTitle"`
+			SubmitterAgentName string `json:"submitterAgentName"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Worker '%s' submitted deliverables for task '%s'", data.SubmitterAgentName, data.TaskTitle)
+		}
+	case "task_completed":
+		var data struct {
+			TaskTitle string `json:"taskTitle"`
+			Bounty    string `json:"bounty"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Task '%s' is completed and accepted. Bounty (%s) has been released.", data.TaskTitle, data.Bounty)
+		}
+	case "task_cancelled":
+		var data struct {
+			TaskTitle string `json:"taskTitle"`
+			Reason    string `json:"reason"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Task '%s' was cancelled. Reason: %s", data.TaskTitle, data.Reason)
+		}
+	}
+	return fmt.Sprintf("Task Event: %s", notif.Event)
+}
+
+func formatServiceNotification(notif types.WebSocketNotificationMessage) string {
+	switch notif.Event {
+	case "service_invoked":
+		var data struct {
+			ServiceTitle    string `json:"serviceTitle"`
+			CallerAgentName string `json:"callerAgentName"`
+			Price           string `json:"price"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Agent '%s' invoked your service '%s' (Price: %s)", data.CallerAgentName, data.ServiceTitle, data.Price)
+		}
+	case "result_submitted":
+		var data struct {
+			ServiceTitle      string `json:"serviceTitle"`
+			ProviderAgentName string `json:"providerAgentName"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Provider '%s' submitted result for service '%s'", data.ProviderAgentName, data.ServiceTitle)
+		}
+	case "invocation_failed":
+		var data struct {
+			ServiceTitle string `json:"serviceTitle"`
+			Error        string `json:"error"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Service invocation '%s' failed. Error: %s", data.ServiceTitle, data.Error)
+		}
+	case "invocation_timeout":
+		var data struct {
+			ServiceTitle string `json:"serviceTitle"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Service invocation '%s' timed out", data.ServiceTitle)
+		}
+	case "invocation_reviewed":
+		var data struct {
+			ServiceTitle    string `json:"serviceTitle"`
+			CallerAgentName string `json:"callerAgentName"`
+			Rating          int    `json:"rating"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Agent '%s' reviewed your service '%s' with rating %d", data.CallerAgentName, data.ServiceTitle, data.Rating)
+		}
+	}
+	return fmt.Sprintf("Service Event: %s", notif.Event)
+}
+
+func formatEmploymentNotification(notif types.WebSocketNotificationMessage) string {
+	switch notif.Event {
+	case "employment_offered":
+		var data struct {
+			EmployerAgentName string `json:"employerAgentName"`
+			Salary            string `json:"salary"`
+			Duration          string `json:"duration"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Agent '%s' offered you an employment (Salary: %s, Duration: %s)", data.EmployerAgentName, data.Salary, data.Duration)
+		}
+	case "employment_accepted":
+		var data struct {
+			EmployeeAgentName string `json:"employeeAgentName"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Agent '%s' accepted your employment offer", data.EmployeeAgentName)
+		}
+	case "employment_rejected":
+		var data struct {
+			EmployeeAgentName string `json:"employeeAgentName"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Agent '%s' rejected your employment offer", data.EmployeeAgentName)
+		}
+	case "employment_terminated":
+		var data struct {
+			EmployerAgentName string `json:"employerAgentName"`
+			Reason            string `json:"reason"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Your employment with '%s' was terminated. Reason: %s", data.EmployerAgentName, data.Reason)
+		}
+	case "employment_completed":
+		var data struct {
+			EmployerAgentName string `json:"employerAgentName"`
+		}
+		if err := json.Unmarshal(notif.Data, &data); err == nil {
+			return fmt.Sprintf("Your employment with '%s' has completed", data.EmployerAgentName)
+		}
+	}
+	return fmt.Sprintf("Employment Event: %s", notif.Event)
+}
+

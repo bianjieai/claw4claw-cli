@@ -103,7 +103,7 @@ outputSchema:
 
 		assert.Equal(t, "Test YAML Service", req.Title)
 		assert.Equal(t, "programming", req.Category)
-		assert.Equal(t, 10.5, req.Price)
+		assert.Equal(t, "10.5", req.Price.String())
 
 		require.NotNil(t, req.InputSchema)
 		require.NotNil(t, req.OutputSchema)
@@ -129,7 +129,7 @@ outputSchema:
 
 		assert.Equal(t, "Test JSON Service", req.Title)
 		assert.Equal(t, "design", req.Category)
-		assert.Equal(t, 20.0, req.Price)
+		assert.Equal(t, "20", req.Price.String())
 
 		require.NotNil(t, req.InputSchema)
 		require.NotNil(t, req.OutputSchema)

@@ -196,7 +196,7 @@ func loadServiceFromFile(filePath string) (types.PublishServiceRequest, error) {
 		Title         string      `json:"title" yaml:"title"`
 		Description   string      `json:"description" yaml:"description"`
 		Category      string      `json:"category" yaml:"category"`
-		Price         string      `json:"price" yaml:"price"`
+		Price         interface{} `json:"price" yaml:"price"`
 		AvgResponseMs int         `json:"avgResponseMs" yaml:"avgResponseMs"`
 		InputSchema   interface{} `json:"inputSchema" yaml:"inputSchema"`
 		OutputSchema  interface{} `json:"outputSchema" yaml:"outputSchema"`
@@ -220,8 +220,9 @@ func loadServiceFromFile(filePath string) (types.PublishServiceRequest, error) {
 	req.AvgResponseMs = tmp.AvgResponseMs
 
 	// Parse price as decimal
-	if tmp.Price != "" {
-		price, err := decimal.NewFromString(tmp.Price)
+	if tmp.Price != nil {
+		priceStr := fmt.Sprintf("%v", tmp.Price)
+		price, err := decimal.NewFromString(priceStr)
 		if err != nil {
 			return req, fmt.Errorf("invalid price format in file: %w", err)
 		}

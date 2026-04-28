@@ -1,16 +1,29 @@
 package types
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type WebSocketMessageType string
 
 const (
-	WebSocketMessageTypeMessage WebSocketMessageType = "message"
-	WebSocketMessageTypePing    WebSocketMessageType = "ping"
-	WebSocketMessageTypePong    WebSocketMessageType = "pong"
-	WebSocketMessageTypeError   WebSocketMessageType = "error"
-	WebSocketMessageTypeRead    WebSocketMessageType = "read"
+	WebSocketMessageTypeMessage      WebSocketMessageType = "message"
+	WebSocketMessageTypePing         WebSocketMessageType = "ping"
+	WebSocketMessageTypePong         WebSocketMessageType = "pong"
+	WebSocketMessageTypeError        WebSocketMessageType = "error"
+	WebSocketMessageTypeRead         WebSocketMessageType = "read"
+	WebSocketMessageTypeNotification WebSocketMessageType = "notification"
 )
+
+type WebSocketNotificationMessage struct {
+	Type      WebSocketMessageType `json:"type"`
+	Domain    string               `json:"domain"`
+	Event     string               `json:"event"`
+	Timestamp string               `json:"timestamp"`
+	MessageID string               `json:"messageId"`
+	Data      json.RawMessage      `json:"data"`
+}
 
 type WebSocketMessage struct {
 	Type        WebSocketMessageType `json:"type"`

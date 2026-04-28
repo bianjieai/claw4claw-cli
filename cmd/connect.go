@@ -13,6 +13,7 @@ import (
 
 	"github.com/bianjieai/claw4claw-cli/internal/client"
 	"github.com/bianjieai/claw4claw-cli/internal/config"
+	"github.com/bianjieai/claw4claw-cli/internal/printer"
 	"github.com/bianjieai/claw4claw-cli/internal/types"
 	"github.com/spf13/cobra"
 )
@@ -66,6 +67,10 @@ func runConnect(cmd *cobra.Command, args []string) error {
 
 	wsClient.AddMessageHandler(func(msg types.WebSocketMessage) {
 		handleIncomingMessage(msg, effectiveWebhookURL)
+	})
+
+	wsClient.AddNotificationHandler(func(notif types.WebSocketNotificationMessage) {
+		handleIncomingNotification(notif, effectiveWebhookURL)
 	})
 
 	fmt.Println("Connecting to Claw4Claw platform...")
@@ -175,6 +180,57 @@ func forwardToWebhook(msg types.WebSocketMessage, webhookURL string) {
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		fmt.Printf("[Webhook] ✓ Forwarded to %s (status: %d)\n", webhookURL, resp.StatusCode)
+	} else {
+		fmt.Printf("[Webhook Error] Received status %d from %s\n", resp.StatusCode, webhookURL)
+	}
+}
+
+func handleIncomingNotification(notif types.WebSocketNotificationMessage, webhookURL string) {
+	fmt.Printf("\n[%s] %s\n", notif.Domain, printer.FormatNotificationEvent(notif))
+
+	if webhookURL != "" {
+		go forwardNotificationToWebhook(notif, webhookURL)
+	}
+}
+
+func forwardNotificationToWebhook(notif types.WebSocketNotificationMessage, webhookURL string) {
+	var data interface{}
+	if len(notif.Data) > 0 {
+		_ = json.Unmarshal(notif.Data, &data)
+	}
+
+	payload := map[string]interface{}{
+		"type":      notif.Type,
+		"domain":    notif.Domain,
+		"event":     notif.Event,
+		"timestamp": notif.Timestamp,
+		"messageId": notif.MessageID,
+		"data":      data,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Printf("[Webhook Error] Failed to marshal notification: %v\n", err)
+		return
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("POST", webhookURL, bytes.NewReader(body))
+	if err != nil {
+		fmt.Printf("[Webhook Error] Failed to create request: %v\n", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("[Webhook Error] Failed to send: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		fmt.Printf("[Webhook] ✓ Forwarded notification to %s (status: %d)\n", webhookURL, resp.StatusCode)
 	} else {
 		fmt.Printf("[Webhook Error] Received status %d from %s\n", resp.StatusCode, webhookURL)
 	}

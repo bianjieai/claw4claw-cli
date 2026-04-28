@@ -27,27 +27,30 @@ const (
 )
 
 type MessageHandler func(msg types.WebSocketMessage)
+type NotificationHandler func(msg types.WebSocketNotificationMessage)
 
 type WebSocketClient struct {
-	conn            *websocket.Conn
-	connMutex       sync.RWMutex
-	state           ConnectionState
-	stateMutex      sync.RWMutex
-	apiKey          string
-	wsEndpoint      string
-	stopChan        chan struct{}
-	stopOnce        sync.Once
-	messageHandlers []MessageHandler
-	handlerMutex    sync.RWMutex
-	reconnectDelay  time.Duration
-	maxReconnect    int
-	reconnectCount  int
-	sendChan        chan types.WebSocketMessage
-	pingTicker      *time.Ticker
-	pongTimeout     time.Duration
-	lastPongTime    time.Time
-	lastPongMutex   sync.RWMutex
-	onStateChange   func(old, new ConnectionState)
+	conn                 *websocket.Conn
+	connMutex            sync.RWMutex
+	writeMutex           sync.Mutex // 写操作互斥锁
+	state                ConnectionState
+	stateMutex           sync.RWMutex
+	apiKey               string
+	wsEndpoint           string
+	stopChan             chan struct{}
+	stopOnce             sync.Once
+	messageHandlers      []MessageHandler
+	notificationHandlers []NotificationHandler
+	handlerMutex         sync.RWMutex
+	reconnectDelay       time.Duration
+	maxReconnect         int
+	reconnectCount       int
+	sendChan             chan types.WebSocketMessage
+	pingTicker           *time.Ticker
+	pongTimeout          time.Duration
+	lastPongTime         time.Time
+	lastPongMutex        sync.RWMutex
+	onStateChange        func(old, new ConnectionState)
 }
 
 type WebSocketClientOption func(*WebSocketClient)
@@ -80,15 +83,16 @@ func NewWebSocketClient(opts ...WebSocketClientOption) *WebSocketClient {
 	wsEndpoint := convertHTTPToWS(config.GlobalConfig.APIEndpoint)
 
 	client := &WebSocketClient{
-		apiKey:          config.GlobalConfig.APIToken,
-		wsEndpoint:      wsEndpoint + "/ws",
-		state:           ConnectionStateDisconnected,
-		stopChan:        make(chan struct{}),
-		messageHandlers: make([]MessageHandler, 0),
-		reconnectDelay:  5 * time.Second,
-		maxReconnect:    10,
-		sendChan:        make(chan types.WebSocketMessage, 100),
-		pongTimeout:     60 * time.Second,
+		apiKey:               config.GlobalConfig.APIToken,
+		wsEndpoint:           wsEndpoint + "/ws",
+		state:                ConnectionStateDisconnected,
+		stopChan:             make(chan struct{}),
+		messageHandlers:      make([]MessageHandler, 0),
+		notificationHandlers: make([]NotificationHandler, 0),
+		reconnectDelay:       5 * time.Second,
+		maxReconnect:         10,
+		sendChan:             make(chan types.WebSocketMessage, 100),
+		pongTimeout:          120 * time.Second,
 	}
 
 	for _, opt := range opts {
@@ -208,6 +212,12 @@ func (c *WebSocketClient) AddMessageHandler(handler MessageHandler) {
 	c.messageHandlers = append(c.messageHandlers, handler)
 }
 
+func (c *WebSocketClient) AddNotificationHandler(handler NotificationHandler) {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+	c.notificationHandlers = append(c.notificationHandlers, handler)
+}
+
 func (c *WebSocketClient) readMessages() {
 	for {
 		select {
@@ -230,12 +240,32 @@ func (c *WebSocketClient) readMessages() {
 			return
 		}
 
-		var msg types.WebSocketMessage
-		if err := json.Unmarshal(message, &msg); err != nil {
+		var raw json.RawMessage
+		if err := json.Unmarshal(message, &raw); err != nil {
 			continue
 		}
 
-		c.handleMessage(msg)
+		var typeMsg struct {
+			Type types.WebSocketMessageType `json:"type"`
+		}
+		if err := json.Unmarshal(raw, &typeMsg); err != nil {
+			continue
+		}
+
+		switch typeMsg.Type {
+		case types.WebSocketMessageTypeNotification:
+			var notif types.WebSocketNotificationMessage
+			if err := json.Unmarshal(raw, &notif); err != nil {
+				continue
+			}
+			c.handleNotification(notif)
+		default:
+			var msg types.WebSocketMessage
+			if err := json.Unmarshal(raw, &msg); err != nil {
+				continue
+			}
+			c.handleMessage(msg)
+		}
 	}
 }
 
@@ -245,17 +275,12 @@ func (c *WebSocketClient) writeMessages() {
 		case <-c.stopChan:
 			return
 		case msg := <-c.sendChan:
-			conn := c.getConnection()
-			if conn == nil {
-				continue
-			}
-
 			data, err := json.Marshal(msg)
 			if err != nil {
 				continue
 			}
 
-			if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+			if err := c.writeMessage(websocket.TextMessage, data); err != nil {
 				c.handleDisconnect()
 			}
 		}
@@ -263,7 +288,7 @@ func (c *WebSocketClient) writeMessages() {
 }
 
 func (c *WebSocketClient) heartbeat() {
-	c.pingTicker = time.NewTicker(30 * time.Second)
+	c.pingTicker = time.NewTicker(60 * time.Second)
 	defer c.pingTicker.Stop()
 
 	for {
@@ -271,12 +296,7 @@ func (c *WebSocketClient) heartbeat() {
 		case <-c.stopChan:
 			return
 		case <-c.pingTicker.C:
-			conn := c.getConnection()
-			if conn == nil {
-				continue
-			}
-
-			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			if err := c.writeMessage(websocket.PingMessage, nil); err != nil {
 				c.handleDisconnect()
 				continue
 			}
@@ -300,6 +320,17 @@ func (c *WebSocketClient) handleMessage(msg types.WebSocketMessage) {
 
 	for _, handler := range handlers {
 		go handler(msg)
+	}
+}
+
+func (c *WebSocketClient) handleNotification(notif types.WebSocketNotificationMessage) {
+	c.handlerMutex.RLock()
+	handlers := make([]NotificationHandler, len(c.notificationHandlers))
+	copy(handlers, c.notificationHandlers)
+	c.handlerMutex.RUnlock()
+
+	for _, handler := range handlers {
+		go handler(notif)
 	}
 }
 
@@ -354,10 +385,25 @@ func (c *WebSocketClient) closeConnection() {
 	c.connMutex.Lock()
 	defer c.connMutex.Unlock()
 	if c.conn != nil {
+		// 使用写锁保护关闭消息
+		c.writeMutex.Lock()
 		_ = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		c.writeMutex.Unlock()
 		c.conn.Close()
 		c.conn = nil
 	}
+}
+
+// writeMessage 线程安全的写消息方法
+func (c *WebSocketClient) writeMessage(messageType int, data []byte) error {
+	c.writeMutex.Lock()
+	defer c.writeMutex.Unlock()
+
+	conn := c.getConnection()
+	if conn == nil {
+		return fmt.Errorf("connection is nil")
+	}
+	return conn.WriteMessage(messageType, data)
 }
 
 func generateMessageID() string {
