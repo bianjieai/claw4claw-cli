@@ -32,7 +32,7 @@ type NotificationHandler func(msg types.WebSocketNotificationMessage)
 type WebSocketClient struct {
 	conn                 *websocket.Conn
 	connMutex            sync.RWMutex
-	writeMutex           sync.Mutex // 写操作互斥锁
+	writeMutex           sync.Mutex
 	state                ConnectionState
 	stateMutex           sync.RWMutex
 	apiKey               string
@@ -43,8 +43,9 @@ type WebSocketClient struct {
 	notificationHandlers []NotificationHandler
 	handlerMutex         sync.RWMutex
 	reconnectDelay       time.Duration
-	maxReconnect         int
+	maxReconnectDelay    time.Duration
 	reconnectCount       int
+	reconnectMutex       sync.Mutex
 	sendChan             chan types.WebSocketMessage
 	pingTicker           *time.Ticker
 	pongTimeout          time.Duration
@@ -61,9 +62,9 @@ func WithReconnectDelay(delay time.Duration) WebSocketClientOption {
 	}
 }
 
-func WithMaxReconnect(max int) WebSocketClientOption {
+func WithMaxReconnectDelay(max time.Duration) WebSocketClientOption {
 	return func(c *WebSocketClient) {
-		c.maxReconnect = max
+		c.maxReconnectDelay = max
 	}
 }
 
@@ -89,10 +90,10 @@ func NewWebSocketClient(opts ...WebSocketClientOption) *WebSocketClient {
 		stopChan:             make(chan struct{}),
 		messageHandlers:      make([]MessageHandler, 0),
 		notificationHandlers: make([]NotificationHandler, 0),
-		reconnectDelay:       5 * time.Second,
-		maxReconnect:         10,
+		reconnectDelay:       1 * time.Second,
+		maxReconnectDelay:    30 * time.Second,
 		sendChan:             make(chan types.WebSocketMessage, 100),
-		pongTimeout:          120 * time.Second,
+		pongTimeout:          60 * time.Second,
 	}
 
 	for _, opt := range opts {
@@ -144,6 +145,7 @@ func (c *WebSocketClient) Connect(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to websocket: %w", err)
 	}
 
+	c.closeConnection()
 	c.setConnection(conn)
 	c.setState(ConnectionStateConnected)
 	c.reconnectCount = 0
@@ -219,6 +221,11 @@ func (c *WebSocketClient) AddNotificationHandler(handler NotificationHandler) {
 }
 
 func (c *WebSocketClient) readMessages() {
+	conn := c.getConnection()
+	if conn == nil {
+		return
+	}
+
 	for {
 		select {
 		case <-c.stopChan:
@@ -226,15 +233,10 @@ func (c *WebSocketClient) readMessages() {
 		default:
 		}
 
-		conn := c.getConnection()
-		if conn == nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			currentConn := c.getConnection()
+			if currentConn == conn {
 				c.handleDisconnect()
 			}
 			return
@@ -294,7 +296,7 @@ func (c *WebSocketClient) writeMessages() {
 }
 
 func (c *WebSocketClient) heartbeat() {
-	c.pingTicker = time.NewTicker(60 * time.Second)
+	c.pingTicker = time.NewTicker(30 * time.Second)
 	defer c.pingTicker.Stop()
 
 	for {
@@ -357,26 +359,41 @@ func (c *WebSocketClient) handlePing(ping types.WebSocketPingMessage) {
 }
 
 func (c *WebSocketClient) handleDisconnect() {
-	c.closeConnection()
-
-	if c.reconnectCount < c.maxReconnect {
-		go c.reconnect()
-	} else {
-		c.setState(ConnectionStateDisconnected)
+	if c.GetState() == ConnectionStateDisconnected {
+		return
 	}
+
+	c.setState(ConnectionStateReconnecting)
+	go c.reconnect()
 }
 
 func (c *WebSocketClient) reconnect() {
-	c.setState(ConnectionStateReconnecting)
+	c.reconnectMutex.Lock()
+	defer c.reconnectMutex.Unlock()
+
+	if c.GetState() == ConnectionStateDisconnected {
+		return
+	}
+
 	c.reconnectCount++
 
-	time.Sleep(c.reconnectDelay)
+	delay := time.Duration(1<<uint(c.reconnectCount-1)) * c.reconnectDelay
+	if delay > c.maxReconnectDelay {
+		delay = c.maxReconnectDelay
+	}
+
+	time.Sleep(delay)
+
+	if c.GetState() == ConnectionStateDisconnected {
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := c.Connect(ctx); err != nil {
-		c.handleDisconnect()
+		c.setState(ConnectionStateReconnecting)
+		go c.reconnect()
 	}
 }
 

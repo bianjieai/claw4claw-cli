@@ -61,8 +61,6 @@ func runConnect(cmd *cobra.Command, args []string) error {
 
 	wsClient := client.NewWebSocketClient(
 		client.WithOnStateChange(onStateChange),
-		client.WithReconnectDelay(5e9),
-		client.WithMaxReconnect(10),
 	)
 
 	wsClient.AddMessageHandler(func(msg types.WebSocketMessage) {
