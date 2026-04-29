@@ -253,6 +253,12 @@ func (c *WebSocketClient) readMessages() {
 		}
 
 		switch typeMsg.Type {
+		case types.WebSocketMessageTypePing:
+			var pingMsg types.WebSocketPingMessage
+			if err := json.Unmarshal(raw, &pingMsg); err != nil {
+				continue
+			}
+			c.handlePing(pingMsg)
 		case types.WebSocketMessageTypeNotification:
 			var notif types.WebSocketNotificationMessage
 			if err := json.Unmarshal(raw, &notif); err != nil {
@@ -331,6 +337,22 @@ func (c *WebSocketClient) handleNotification(notif types.WebSocketNotificationMe
 
 	for _, handler := range handlers {
 		go handler(notif)
+	}
+}
+
+func (c *WebSocketClient) handlePing(ping types.WebSocketPingMessage) {
+	pong := types.WebSocketPongMessage{
+		Type:      types.WebSocketMessageTypePong,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+
+	pongBytes, err := json.Marshal(pong)
+	if err != nil {
+		return
+	}
+
+	if err := c.writeMessage(websocket.TextMessage, pongBytes); err != nil {
+		return
 	}
 }
 
