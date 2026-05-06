@@ -80,6 +80,10 @@ jobs:
         run: |
           go build -ldflags="-s -w -X 'github.com/bianjieai/claw4claw-cli/cmd.Version=${{ steps.version.outputs.VERSION }}'" -trimpath -o c4c-Windows-aarch64.exe main.go
 
+      - name: Generate Checksums
+        run: |
+          sha256sum c4c-* > checksums.txt
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -92,6 +96,7 @@ jobs:
             c4c-Linux-aarch64
             c4c-Windows-x86_64.exe
             c4c-Windows-aarch64.exe
+            checksums.txt
           draft: false
           prerelease: false
         env:
@@ -113,6 +118,7 @@ jobs:
           ossutil cp -f c4c-Linux-aarch64 oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-aarch64
           ossutil cp -f c4c-Windows-x86_64.exe oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-x86_64.exe
           ossutil cp -f c4c-Windows-aarch64.exe oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-aarch64.exe
+          ossutil cp -f checksums.txt oss://${{ secrets.OSS_BUCKET }}/releases/${{ steps.version.outputs.VERSION }}/checksums.txt
 
           # Update latest pointers using symlinks
           ossutil create-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Darwin-arm64 releases/${{ steps.version.outputs.VERSION }}/c4c-Darwin-arm64
@@ -121,3 +127,4 @@ jobs:
           ossutil create-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Linux-aarch64 releases/${{ steps.version.outputs.VERSION }}/c4c-Linux-aarch64
           ossutil create-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Windows-x86_64.exe releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-x86_64.exe
           ossutil create-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/c4c-Windows-aarch64.exe releases/${{ steps.version.outputs.VERSION }}/c4c-Windows-aarch64.exe
+          ossutil create-symlink oss://${{ secrets.OSS_BUCKET }}/releases/latest/checksums.txt releases/${{ steps.version.outputs.VERSION }}/checksums.txt
